@@ -12,6 +12,8 @@ import org.junit.Test;
 
 
 
+
+
 import strategy.common.*;
 import strategy.game.*;
 import strategy.game.common.*;
@@ -148,6 +150,23 @@ public class BetaStrategyTest {
 		game = gameFactory.makeBetaStrategyGame(invalidRed, invalidBlue);
 	}
 	
+	@Test(expected=StrategyException.class)
+	public void StartGameBeforeFinishing() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.startGame();
+	}
+	
+	@Test
+	public void getPieceAtTest() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		// Red Flag should be at location 0,0
+		assertEquals(game.getPieceAt(new Location2D(0,0)), new Piece(playerPieces[0], PlayerColor.RED));
+		// No piece at location 2,2
+		assertNull(game.getPieceAt(new Location2D(2,2)));
+	}
 	
 	
 

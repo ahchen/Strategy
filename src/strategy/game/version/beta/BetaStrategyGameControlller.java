@@ -17,11 +17,18 @@ import strategy.game.common.*;
  */
 public class BetaStrategyGameControlller implements StrategyGameController {
 	
-	private final int numMoves;
-	private final boolean gameStarted;
-	private final boolean gameOver;	
+	private int numMoves;
+	private boolean gameStarted;
+	private boolean gameOver;	
 	private HashMap<Location, Piece> board;
 	
+	/**
+	 * Public constructor for BetaStrategyGameControlller
+	 * Validates the players pieces and initializes a HashMap to represent the board
+	 * @param redPieces red player pieces
+	 * @param bluePieces blue player pieces
+	 * @throws StrategyException
+	 */
 	public BetaStrategyGameControlller(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
 		
 		if (redPieces == null || bluePieces == null) {
@@ -60,7 +67,12 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	 */
 	@Override
 	public void startGame() throws StrategyException {
-		//TODO
+		if(gameStarted) {
+			throw new StrategyException("Game Already In Progress");
+		}
+		gameStarted = true;
+		gameOver = false;
+		numMoves = 0;
 	}
 
 	/* 
@@ -78,7 +90,9 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	 */
 	@Override
 	public Piece getPieceAt(Location location) {
-		// TODO Auto-generated method stub
+		if (board.containsKey(location)) {
+			return board.get(location);
+		}
 		return null;
 	}
 	

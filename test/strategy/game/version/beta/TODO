@@ -1,6 +1,10 @@
 x Create a beta game
 x Set pieces
 x invalid pieces = exception
+- same color moves twice in a row
+- blue moves first
+- move to occupied space of same color
+- valid move (adjust hashmap)
 
 
 

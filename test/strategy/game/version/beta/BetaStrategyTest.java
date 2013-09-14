@@ -168,6 +168,62 @@ public class BetaStrategyTest {
 		assertNull(game.getPieceAt(new Location2D(2,2)));
 	}
 	
+	@Test(expected=StrategyException.class)
+	public void moveBeforeStartGame() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		// move before game start
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveFlag() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.FLAG, new Location2D(0,0), new Location2D(0,1));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void locationOffBoard() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.MARSHAL, new Location2D(6,6), new Location2D(10,1));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveInvalidFromLocation() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(0,1));
+	}
+	//TODO
+	@Test(expected=StrategyException.class)
+	public void moveInvalidToLocation() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+	}
+	/*
+	@Test(expected=StrategyException.class)
+	public void moveInvalidToLocation2() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.FLAG, new Location2D(0,0), new Location2D(0,1));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveInvalidToLocation3() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.FLAG, new Location2D(0,0), new Location2D(0,1));
+	}
+	*/
 	
 
 }

@@ -20,6 +20,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	private int numMoves;
 	private boolean gameStarted;
 	private boolean gameOver;	
+	private PlayerColor lastPlayerColor;
 	private HashMap<Location, Piece> board;
 	
 	/**
@@ -45,11 +46,19 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		numMoves = 0;
 		gameStarted = false;
 		gameOver = false;
+		lastPlayerColor = null;
 		board = new HashMap<Location, Piece>();
 		
 		Iterator<PieceLocationDescriptor> redIter, blueIter;
 		redIter = redPieces.iterator();
 		blueIter = bluePieces.iterator();
+		
+		for (int i = 0; i < 6; i++) {
+			for (int j = 0; j < 6; j++) {
+				// initialize board
+				board.put(new Location2D(j,i), null);
+			}
+		}
 		
 		PieceLocationDescriptor singleRedPiece, singleBluePiece;
 		
@@ -73,6 +82,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		gameStarted = true;
 		gameOver = false;
 		numMoves = 0;
+		lastPlayerColor = null;
 	}
 
 	/* 
@@ -81,7 +91,22 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	@Override
 	public MoveResult move(PieceType piece, Location from, Location to)
 			throws StrategyException {
-		// TODO Auto-generated method stub
+		if (gameOver) {
+			throw new StrategyException("The game is over, you cannot make a move");
+		}
+		if (!gameStarted) {
+			throw new StrategyException("You must start the game!");
+		}
+		if (piece == PieceType.FLAG) {
+			throw new StrategyException("You cannot move the flag");
+		}
+		if (!board.containsKey(from) || !board.containsKey(to)) {
+			throw new StrategyException("Coordinates not on board");
+		}
+		if (board.get(from).getType() != piece) {
+			throw new StrategyException("Specified piece is not located at given location");
+		}
+		
 		return null;
 	}
 

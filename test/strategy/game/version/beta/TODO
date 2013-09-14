@@ -1,0 +1,16 @@
+x Create a beta game
+x Set pieces
+x invalid pieces = exception
+
+
+
+- Move before initialization -> Exception
+- startGame() does not throw exception
+- make valid move 
+- make invalid move, wrong piece
+- make invalid move, bad x-coordinate in from
+- make invalid move, bad y-coordinate in from
+- make invalid move, bad x-coordinate in to
+- make invalid move, bad y-coordinate in to
+- make second move before re-initializing -> Exception
+- Play two games in a row

@@ -267,6 +267,21 @@ public class BetaStrategyTest {
 		assertEquals(mResult.getStatus(), expectedResult.getStatus());
 	}
 	
+	@Test(expected=StrategyException.class)
+	public void blueFirstMoveTest() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+	}
 	
+	@Test(expected=StrategyException.class)
+	public void playerMoveTwiceTest() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, new Location2D(0,1), new Location2D(0,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(0,2), new Location2D(1,2));
+	}
 
 }

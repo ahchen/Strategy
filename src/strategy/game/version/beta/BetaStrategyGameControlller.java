@@ -110,10 +110,22 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		fromPiece = getPieceAt(from);
 		toPiece = getPieceAt(to);
 		
+		if (lastPlayerColor == null) {
+			if (fromPiece.getOwner() == PlayerColor.BLUE) {
+				throw new StrategyException("Blue cannot start the game");
+			}
+		}
+		
+		if (lastPlayerColor == fromPiece.getOwner()) {
+			throw new StrategyException("Same player cannot move twice in a row");
+		}
+		
 		if (toPiece == null) {
 			checkLocations(from, to);
 			board.put(from, null);
 			board.put(to, fromPiece);
+			numMoves++;
+			lastPlayerColor = fromPiece.getOwner();
 			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
 		}
 		

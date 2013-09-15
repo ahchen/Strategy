@@ -11,7 +11,6 @@
 package strategy.game;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import strategy.common.*;
 import strategy.game.common.*;
@@ -72,7 +71,7 @@ public class StrategyGameFactory
 			Collection<PieceLocationDescriptor> redConfiguration,
 			Collection<PieceLocationDescriptor> blueConfiguration)
 		throws StrategyException
-	{		
+	{	
 		return new BetaStrategyGameControlller(redConfiguration, blueConfiguration);
 	}
 }

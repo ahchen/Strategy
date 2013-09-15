@@ -6,12 +6,14 @@ package strategy.game.version.beta;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import strategy.common.*;
 import strategy.game.*;
 import strategy.game.common.*;
 
 /**
+ * 
  * @author Alex C
  * @version September 13, 2013
  */
@@ -21,7 +23,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	private boolean gameStarted;
 	private boolean gameOver;	
 	private PlayerColor lastPlayerColor;
-	private HashMap<Location, Piece> board;
+	private final Map<Location, Piece> board;
 	
 	/**
 	 * Public constructor for BetaStrategyGameControlller
@@ -49,14 +51,14 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		lastPlayerColor = null;
 		board = new HashMap<Location, Piece>();
 		
-		Iterator<PieceLocationDescriptor> redIter, blueIter;
+		final Iterator<PieceLocationDescriptor> redIter, blueIter;
 		redIter = redPieces.iterator();
 		blueIter = bluePieces.iterator();
 		
 		for (int i = 0; i < 6; i++) {
 			for (int j = 0; j < 6; j++) {
 				// initialize board
-				board.put(new Location2D(j,i), null);
+				board.put(new Location2D(j, i), null);
 			}
 		}
 		
@@ -106,7 +108,8 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		if (board.get(from).getType() != piece) {
 			throw new StrategyException("Specified piece is not located at given location");
 		}
-		Piece fromPiece, toPiece;
+		
+		final Piece fromPiece, toPiece;
 		fromPiece = getPieceAt(from);
 		toPiece = getPieceAt(to);
 		
@@ -120,20 +123,20 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 			throw new StrategyException("Same player cannot move twice in a row");
 		}
 		
-		if (toPiece == null) {
-			checkLocations(from, to);
-			board.put(from, null);
-			board.put(to, fromPiece);
-			numMoves++;
-			lastPlayerColor = fromPiece.getOwner();
-			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
-		}
-		
-		if (fromPiece.getOwner() == toPiece.getOwner()) {
+		if (toPiece != null && fromPiece.getOwner() == toPiece.getOwner()) {
 			throw new StrategyException("Cannot move to a space with your own piece on it already");	
 		}
+	
+		checkLocations(from, to);
+		board.put(from, null);
+		board.put(to, fromPiece);
+		lastPlayerColor = fromPiece.getOwner();
 		
-		return null;
+		if (lastPlayerColor == PlayerColor.BLUE) {
+			numMoves++;
+		}
+		
+		return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
 	}
 
 	
@@ -176,9 +179,12 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		int numCaptain = 2;
 		int numLieutenant = 3;
 		int numSergeant = 3;
-		PieceLocationDescriptor thisPiece, firstPiece;
+		final int redSpaceTotal = 78;
+		final int blueSpaceTotal = 366;
+		PieceLocationDescriptor thisPiece;
+		final PieceLocationDescriptor firstPiece;
 		int thisPieceLocation;
-		int spaceTotal;		
+		int spaceTotal = 0;	
 		
 		final Iterator<PieceLocationDescriptor> pieceIter, firstPieceIter;
 		pieceIter = playerPieces.iterator();
@@ -188,13 +194,11 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		switch(firstPiece.getPiece().getOwner()) 
 		{
 			case RED:
-				spaceTotal = 78;
+				spaceTotal = redSpaceTotal;
 				break;
 			case BLUE:
-				spaceTotal = 366;
+				spaceTotal = blueSpaceTotal;
 				break;
-			default:
-				throw new StrategyException("Unknown Player Color");
 		}
 		
 		while (pieceIter.hasNext()) 
@@ -238,7 +242,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		if (spaceTotal != 0)
 		{
 			throw new StrategyException("Invalid Placement of Pieces");
-		}		
+		}
 	}
 
 }

@@ -1,20 +1,13 @@
 x Create a beta game
 x Set pieces
 x invalid pieces = exception
-- same color moves twice in a row
-- blue moves first
-- move to occupied space of same color
-- valid move (adjust hashmap)
-
-
-
-- Move before initialization -> Exception
-- startGame() does not throw exception
-- make valid move 
-- make invalid move, wrong piece
-- make invalid move, bad x-coordinate in from
-- make invalid move, bad y-coordinate in from
-- make invalid move, bad x-coordinate in to
-- make invalid move, bad y-coordinate in to
-- make second move before re-initializing -> Exception
+x same color moves twice in a row
+x blue moves first
+x move to occupied space of same color
+x valid move (adjust hashmap)
+- battle win (ranks)
+- 6 moves only
+- win on 6th move (should not be draw)
+- play game after finish (before starting new game)
+- start new game after finishing a game
 - Play two games in a row

@@ -8,5 +8,5 @@ x valid move (adjust hashmap)
 x battle win/lose (ranks)
 x 6 moves only
 x win on 6th move (should not be draw)
-- start new game after finishing a game
+x start new game after finishing a game doesnt give exception
 - Play two games in a row

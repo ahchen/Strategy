@@ -10,14 +10,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-
-
-
-
-
-
-
-
 import strategy.common.*;
 import strategy.game.*;
 import strategy.game.common.*;
@@ -315,6 +307,7 @@ public class BetaStrategyTest {
 		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
 		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
 		
+		// flag captured
 		res = game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
 		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
 		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.RED), new Location2D(5,4)));
@@ -334,6 +327,7 @@ public class BetaStrategyTest {
 		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
 		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,2));
 		
+		// flag captured
 		res = game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,1));
 		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
 		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.BLUE), new Location2D(0,1)));
@@ -349,10 +343,30 @@ public class BetaStrategyTest {
 		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
 		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
 		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		// red captures flag in this move, game over
 		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
 		
+		// move after game without restarting invalid
 		game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,3));
+	}
+	
+	@Test
+	public void startGameAfterFinish() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
 		
+		game.startGame();
+
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		// red captures flag in this move, game over
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
+	
+		// start game after a finish
+		game.startGame();
+		// make sure moves work
+		assertNotNull(game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2)));
 	}
 	
 	@Test
@@ -410,6 +424,7 @@ public class BetaStrategyTest {
 		
 		game.move(PieceType.SERGEANT, new Location2D(1,2), new Location2D(2,2));
 		
+		// should win despite being 6th move
 		res = game.move(PieceType.COLONEL, new Location2D(0,2), new Location2D(0,1));
 		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
 		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.COLONEL, PlayerColor.BLUE), new Location2D(0,1)));		
@@ -537,7 +552,7 @@ public class BetaStrategyTest {
 
 		res = game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,3));
 		assertEquals(res.getStatus(), MoveResultStatus.OK);
-		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.BLUE), new Location2D(4,3)));		
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.BLUE), new Location2D(4,2)));		
 	}
 	
 	@Test

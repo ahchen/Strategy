@@ -89,7 +89,7 @@ public class BetaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void NullCollectionTest() throws StrategyException {
-		game = gameFactory.makeBetaStrategyGame(null, null);
+		game = gameFactory.makeBetaStrategyGame(null, null); 
 	}
 	
 	@Test(expected=StrategyException.class)
@@ -266,7 +266,12 @@ public class BetaStrategyTest {
 		MoveResult mResult= game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(1,2));
 		MoveResult expectedResult= new MoveResult(MoveResultStatus.OK, 
 				new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.RED), new Location2D(1,2)));
-				
+		
+		// no piece at old location
+		assertNull(game.getPieceAt(new Location2D(1,1)));
+		// piece at new location
+		assertEquals(game.getPieceAt(new Location2D(1,2)), new Piece(PieceType.MARSHAL, PlayerColor.RED));
+		//verify MoveResult
 		assertEquals(mResult.getBattleWinner(), expectedResult.getBattleWinner());
 		assertEquals(mResult.getStatus(), expectedResult.getStatus());
 	}
@@ -297,10 +302,18 @@ public class BetaStrategyTest {
 		MoveResult res;
 		
 		res = game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		//verify piece actually moved on board
+		assertNull(game.getPieceAt(new Location2D(5,1)));
+		assertEquals(game.getPieceAt(new Location2D(5,2)), new Piece(PieceType.SERGEANT, PlayerColor.RED));
+		//verify moveresult
 		assertEquals(res.getStatus(), MoveResultStatus.OK);
 		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.RED), new Location2D(5,2)));
 		
 		res = game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		//verify piece moved on board
+		assertNull(game.getPieceAt(new Location2D(0,4)));
+		assertEquals(game.getPieceAt(new Location2D(0,3)), new Piece(PieceType.SERGEANT, PlayerColor.BLUE));
+		// verify moveresult
 		assertEquals(res.getStatus(), MoveResultStatus.OK);
 		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.BLUE), new Location2D(0,3)));
 		
@@ -367,6 +380,37 @@ public class BetaStrategyTest {
 		game.startGame();
 		// make sure moves work
 		assertNotNull(game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2)));
+	}
+	
+	@Test
+	public void playTwoCompleteGames() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		// red captures flag in this move, game over
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
+	
+		// start game after a finish
+		game.startGame();
+		
+		// play a second game
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,2));
+		
+		// flag captured
+		res = game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,1));
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.BLUE), new Location2D(0,1)));
 	}
 	
 	@Test
@@ -443,6 +487,10 @@ public class BetaStrategyTest {
 		
 		game.move(PieceType.COLONEL, new Location2D(2,2), new Location2D(2,3));
 		res = game.move(PieceType.COLONEL, new Location2D(3,3), new Location2D(2,3));
+		
+		// both pieces removed from board
+		assertNull(game.getPieceAt(new Location2D(2,3)));
+		assertNull(game.getPieceAt(new Location2D(3,3)));
 		
 		assertEquals(res.getStatus(), MoveResultStatus.OK);
 		assertNull(res.getBattleWinner());		

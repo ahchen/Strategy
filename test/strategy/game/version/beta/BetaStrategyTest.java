@@ -17,6 +17,7 @@ import org.junit.Test;
 
 
 
+
 import strategy.common.*;
 import strategy.game.*;
 import strategy.game.common.*;
@@ -35,7 +36,7 @@ public class BetaStrategyTest {
 	private Collection<PieceLocationDescriptor> blueCollection;
 	
 	private static Location[] everySpace = new Location2D[36];  
-	// define pieces in certain configuation
+	// define pieces in certain configuration
 	private static PieceType[] playerPieces = 
 	{
 		PieceType.LIEUTENANT, PieceType.LIEUTENANT, 
@@ -188,7 +189,7 @@ public class BetaStrategyTest {
 	}
 	
 	@Test
-	public void getPieceAtTest() throws StrategyException {
+	public void testGetPieceAt() throws StrategyException {
 		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
 		
 		// Red Flag should be at location 0,1
@@ -295,6 +296,289 @@ public class BetaStrategyTest {
 		game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,3));
 	}
 	
+	@Test
+	public void redWins() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		res = game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.RED), new Location2D(5,2)));
+		
+		res = game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.BLUE), new Location2D(0,3)));
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		
+		res = game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
+		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.RED), new Location2D(5,4)));
+	}
 	
+	@Test
+	public void blueWins() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,2));
+		
+		res = game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,1));
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.BLUE), new Location2D(0,1)));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveAfterFinish() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
+		
+		game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,3));
+		
+	}
+	
+	@Test
+	public void drawAfterSixMoves() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(4,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(1,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(4,2), new Location2D(3,2));
+		game.move(PieceType.SERGEANT, new Location2D(1,3), new Location2D(2,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(3,2), new Location2D(2,2));
+		game.move(PieceType.SERGEANT, new Location2D(2,3), new Location2D(3,3));
+
+		game.move(PieceType.SERGEANT, new Location2D(2,2), new Location2D(1,2));
+		game.move(PieceType.SERGEANT, new Location2D(3,3), new Location2D(4,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(1,2), new Location2D(0,2));
+		
+		res = game.move(PieceType.SERGEANT, new Location2D(4,3), new Location2D(5,3));
+		assertEquals(res.getStatus(), MoveResultStatus.DRAW);
+		assertNull(res.getBattleWinner());		
+	}
+	
+	@Test
+	public void winOnSixthMove() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.COLONEL, new Location2D(3,4), new Location2D(3,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(4,2));
+		game.move(PieceType.COLONEL, new Location2D(3,3), new Location2D(2,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(4,2), new Location2D(3,2));
+		game.move(PieceType.COLONEL, new Location2D(2,3), new Location2D(1,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(3,2), new Location2D(2,2));
+		game.move(PieceType.COLONEL, new Location2D(1,3), new Location2D(0,3));
+
+		game.move(PieceType.SERGEANT, new Location2D(2,2), new Location2D(1,2));
+		game.move(PieceType.COLONEL, new Location2D(0,3), new Location2D(0,2));
+		
+		game.move(PieceType.SERGEANT, new Location2D(1,2), new Location2D(2,2));
+		
+		res = game.move(PieceType.COLONEL, new Location2D(0,2), new Location2D(0,1));
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.COLONEL, PlayerColor.BLUE), new Location2D(0,1)));		
+	}
+	
+	@Test
+	public void battleTie() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.COLONEL, new Location2D(2,1), new Location2D(2,2));
+		game.move(PieceType.COLONEL, new Location2D(3,4), new Location2D(3,3));
+		
+		game.move(PieceType.COLONEL, new Location2D(2,2), new Location2D(2,3));
+		res = game.move(PieceType.COLONEL, new Location2D(3,3), new Location2D(2,3));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertNull(res.getBattleWinner());		
+	}
+	
+	@Test
+	public void marshalBattle() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(1,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+		
+		res = game.move(PieceType.MARSHAL, new Location2D(1,2), new Location2D(1,3));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.RED), new Location2D(1,3)));		
+	}
+	
+	@Test
+	public void colonelLose() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.COLONEL, new Location2D(2,1), new Location2D(2,2));
+		game.move(PieceType.MARSHAL, new Location2D(4,4), new Location2D(4,3));
+		
+		game.move(PieceType.COLONEL, new Location2D(2,2), new Location2D(2,3));
+		game.move(PieceType.MARSHAL, new Location2D(4,3), new Location2D(3,3));
+		
+		res = game.move(PieceType.COLONEL, new Location2D(2,3), new Location2D(3,3));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.BLUE), new Location2D(2,3)));		
+	}
+	
+	@Test
+	public void colonelWin() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.COLONEL, new Location2D(2,1), new Location2D(2,2));
+		game.move(PieceType.CAPTAIN, new Location2D(2,4), new Location2D(2,3));
+		
+		res = game.move(PieceType.COLONEL, new Location2D(2,2), new Location2D(2,3));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.COLONEL, PlayerColor.RED), new Location2D(2,3)));		
+	}
+	
+	@Test
+	public void captainLose() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.CAPTAIN, new Location2D(3,1), new Location2D(3,2));
+		game.move(PieceType.MARSHAL, new Location2D(4,4), new Location2D(4,3));
+		
+		game.move(PieceType.CAPTAIN, new Location2D(3,2), new Location2D(3,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+
+		res = game.move(PieceType.CAPTAIN, new Location2D(3,3), new Location2D(4,3));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.BLUE), new Location2D(3,3)));		
+	}
+	
+	@Test
+	public void captainWin() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.CAPTAIN, new Location2D(3,1), new Location2D(3,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+		
+		game.move(PieceType.CAPTAIN, new Location2D(3,2), new Location2D(3,3));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,3), new Location2D(2,3));
+		
+		res = game.move(PieceType.CAPTAIN, new Location2D(3,3), new Location2D(2,3));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.CAPTAIN, PlayerColor.RED), new Location2D(2,3)));		
+	}
+	
+	@Test
+	public void lieutenantLose() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+		game.move(PieceType.MARSHAL, new Location2D(4,4), new Location2D(4,3));
+
+		res = game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,3));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.BLUE), new Location2D(4,3)));		
+	}
+	
+	@Test
+	public void lieutenantWin() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		
+		game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(3,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(1,3));
+		
+		game.move(PieceType.LIEUTENANT, new Location2D(3,2), new Location2D(2,2));
+		game.move(PieceType.SERGEANT, new Location2D(1,3), new Location2D(2,3));
+		
+		res = game.move(PieceType.LIEUTENANT, new Location2D(2,2), new Location2D(2,3));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.LIEUTENANT, PlayerColor.RED), new Location2D(2,3)));		
+	}
+	
+	@Test 
+	public void sergeantBattle() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.COLONEL, new Location2D(3,4), new Location2D(3,3));
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(4,2));
+		game.move(PieceType.COLONEL, new Location2D(3,3), new Location2D(4,3));
+
+		res = game.move(PieceType.SERGEANT, new Location2D(4,2), new Location2D(4,3));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.COLONEL, PlayerColor.BLUE), new Location2D(4,2)));
+	}
 
 }

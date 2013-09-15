@@ -26,7 +26,7 @@ import strategy.game.common.*;
  */
 public class AlphaStrategyMasterTest
 {
-	static private StrategyGameFactory gameFactory = StrategyGameFactory.getInstance();
+	final static private StrategyGameFactory gameFactory = StrategyGameFactory.getInstance();
 	private  StrategyGameController game;
 	private final Location redMarshalLocation = new Location2D(0, 0);
 	private final Location redFlagLocation = new Location2D(1, 0);

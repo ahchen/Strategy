@@ -126,17 +126,131 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		if (toPiece != null && fromPiece.getOwner() == toPiece.getOwner()) {
 			throw new StrategyException("Cannot move to a space with your own piece on it already");	
 		}
-	
-		checkLocations(from, to);
-		board.put(from, null);
-		board.put(to, fromPiece);
-		lastPlayerColor = fromPiece.getOwner();
 		
-		if (lastPlayerColor == PlayerColor.BLUE) {
-			numMoves++;
+		checkLocations(from, to);
+		MoveResult result;
+		
+		if (toPiece == null) {
+			board.put(from, null);
+			board.put(to, fromPiece);
+			
+			result = new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
+		}
+		else {
+			result = Battle(new PieceLocationDescriptor(fromPiece, from),
+					new PieceLocationDescriptor(toPiece, to));
+			
+			if (result.getStatus() == MoveResultStatus.BLUE_WINS ||
+					result.getStatus() == MoveResultStatus.RED_WINS) {
+				gameOver = true;
+				return result;
+			}
 		}
 		
-		return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
+		lastPlayerColor = fromPiece.getOwner();
+		if (lastPlayerColor == PlayerColor.BLUE) {
+			numMoves++;
+			
+			if (numMoves == 6) {
+				gameOver = true;
+				return new MoveResult(MoveResultStatus.DRAW, null);
+			}
+		}
+		
+		return result;
+	}
+	
+	private MoveResult Battle(PieceLocationDescriptor from, PieceLocationDescriptor to) {
+		if (from.getPiece().getType() == to.getPiece().getType()) {
+			board.put(from.getLocation(), null);
+			board.put(to.getLocation(), null);
+			
+			return new MoveResult(MoveResultStatus.OK, null);
+		}
+		
+		final PieceType fromType, toType;
+		final Location fromLoc, toLoc;
+		final PieceLocationDescriptor newFrom, newTo;
+		
+		fromType = from.getPiece().getType();
+		toType = to.getPiece().getType();
+		
+		fromLoc = from.getLocation();
+		toLoc = to.getLocation();
+		
+		newFrom = new PieceLocationDescriptor(from.getPiece(), toLoc);
+		newTo = new PieceLocationDescriptor(to.getPiece(), fromLoc);
+		
+		MoveResult result = null;
+		
+		if (toType == PieceType.FLAG) {
+			board.put(fromLoc, null);
+			board.put(toLoc, from.getPiece());
+			
+			if (from.getPiece().getOwner() == PlayerColor.BLUE) {
+				return new MoveResult(MoveResultStatus.BLUE_WINS, newFrom);
+			}
+			return new MoveResult(MoveResultStatus.RED_WINS, newFrom);
+		}
+		
+		switch (fromType) {
+			case MARSHAL:
+				board.put(from.getLocation(), null);
+				board.put(to.getLocation(), from.getPiece());
+				
+				result = new MoveResult(MoveResultStatus.OK, newFrom);
+				break;
+			case COLONEL:
+				if (toType == PieceType.MARSHAL) {
+					board.put(to.getLocation(), null);
+					board.put(from.getLocation(), to.getPiece());
+									
+					result = new MoveResult(MoveResultStatus.OK, newTo);
+				}
+				else {
+					board.put(from.getLocation(), null);
+					board.put(to.getLocation(), from.getPiece());
+					
+					result = new MoveResult(MoveResultStatus.OK, newFrom);
+				}
+				break;
+			case CAPTAIN:
+				if (toType == PieceType.LIEUTENANT || toType == PieceType.SERGEANT) {
+					board.put(from.getLocation(), null);
+					board.put(to.getLocation(), from.getPiece());
+					
+					result = new MoveResult(MoveResultStatus.OK, newFrom);
+				}
+				else {
+					board.put(to.getLocation(), null);
+					board.put(from.getLocation(), to.getPiece());
+									
+					result = new MoveResult(MoveResultStatus.OK, newTo);
+				}
+				break;
+			case LIEUTENANT:
+				if (toType == PieceType.SERGEANT) {
+					board.put(from.getLocation(), null);
+					board.put(to.getLocation(), from.getPiece());
+					
+					result = new MoveResult(MoveResultStatus.OK, newFrom);
+				}
+				else {
+					board.put(to.getLocation(), null);
+					board.put(from.getLocation(), to.getPiece());
+									
+					result = new MoveResult(MoveResultStatus.OK, newTo);
+				}
+				break;
+			case SERGEANT:
+				board.put(to.getLocation(), null);
+				board.put(from.getLocation(), to.getPiece());
+								
+				result = new MoveResult(MoveResultStatus.OK, newTo);
+				break;
+		}
+		
+		return result;
 	}
 
 	

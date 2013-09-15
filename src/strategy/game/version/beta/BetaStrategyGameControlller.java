@@ -106,21 +106,50 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		if (board.get(from).getType() != piece) {
 			throw new StrategyException("Specified piece is not located at given location");
 		}
+		Piece fromPiece, toPiece;
+		fromPiece = getPieceAt(from);
+		toPiece = getPieceAt(to);
+		
+		if (toPiece == null) {
+			checkLocations(from, to);
+			board.put(from, null);
+			board.put(to, fromPiece);
+			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
+		}
+		
+		if (fromPiece.getOwner() == toPiece.getOwner()) {
+			throw new StrategyException("Cannot move to a space with your own piece on it already");	
+		}
 		
 		return null;
 	}
 
+	
+	/**
+	 * 
+	 * @param from
+	 * @param to
+	 * @throws StrategyException
+	 */
+	private void checkLocations(Location from, Location to) throws StrategyException {
+		try {
+			if (from.distanceTo(to) > 1) {
+				throw new StrategyException("Locations are too far apart");
+			}	
+		}
+		catch (StrategyRuntimeException e) {
+			throw new StrategyException(e.getMessage());
+		}
+	}
+	
 	/* 
 	 * @see strategy.game.StrategyGameController#getPieceAt(strategy.game.common.Location)
 	 */
 	@Override
 	public Piece getPieceAt(Location location) {
-		if (board.containsKey(location)) {
-			return board.get(location);
-		}
-		return null;
+		return board.get(location);
 	}
-	
+		
 	/**
 	 * Validates a collection of pieces for valid PieceType and Location
 	 * Throws StrategyException if the piece collection is invalid
@@ -143,24 +172,17 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		pieceIter = playerPieces.iterator();
 		firstPieceIter = playerPieces.iterator();
 		
-		if (firstPieceIter.hasNext()) 
+		firstPiece = firstPieceIter.next();
+		switch(firstPiece.getPiece().getOwner()) 
 		{
-			firstPiece = firstPieceIter.next();
-			switch(firstPiece.getPiece().getOwner()) 
-			{
-				case RED:
-					spaceTotal = 78;
-					break;
-				case BLUE:
-					spaceTotal = 366;
-					break;
-				default:
-					throw new StrategyException("Unknown Player Color");
-			}
-		}
-		else 
-		{
-			throw new StrategyException("Player Pieces Empty");
+			case RED:
+				spaceTotal = 78;
+				break;
+			case BLUE:
+				spaceTotal = 366;
+				break;
+			default:
+				throw new StrategyException("Unknown Player Color");
 		}
 		
 		while (pieceIter.hasNext()) 

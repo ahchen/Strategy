@@ -4,10 +4,13 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+
 
 
 
@@ -117,6 +120,22 @@ public class BetaStrategyTest {
 		game = gameFactory.makeBetaStrategyGame(invalidRed, invalidBlue);
 	}
 	
+	@Test(expected=StrategyException.class)
+	public void InvalidBetaPieceTest() throws StrategyException {
+		Collection<PieceLocationDescriptor> invalidRed = redCollection;
+		Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
+		
+		// remove red and blue flags
+		invalidRed.remove(new PieceLocationDescriptor(redPieces[0], everySpace[0]));
+		invalidBlue.remove(new PieceLocationDescriptor(bluePieces[0], everySpace[35]));
+		
+		// add a bomb and scout (invalid piece for beta)
+		invalidRed.add(new PieceLocationDescriptor(new Piece(PieceType.BOMB, PlayerColor.RED), everySpace[0]));
+		invalidBlue.add(new PieceLocationDescriptor(new Piece(PieceType.SCOUT, PlayerColor.BLUE), everySpace[35]));
+		
+		game = gameFactory.makeBetaStrategyGame(invalidRed, invalidBlue);
+	}
+	
 	
 	@Test(expected=StrategyException.class)
 	public void InvalidPieceLayoutTest() throws StrategyException {
@@ -164,6 +183,7 @@ public class BetaStrategyTest {
 		
 		// Red Flag should be at location 0,0
 		assertEquals(game.getPieceAt(new Location2D(0,0)), new Piece(playerPieces[0], PlayerColor.RED));
+		
 		// No piece at location 2,2
 		assertNull(game.getPieceAt(new Location2D(2,2)));
 	}
@@ -199,31 +219,54 @@ public class BetaStrategyTest {
 		game.startGame();
 		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(0,1));
 	}
-	//TODO
+	
 	@Test(expected=StrategyException.class)
 	public void moveInvalidToLocation() throws StrategyException {
 		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
-		
-	}
-	/*
-	@Test(expected=StrategyException.class)
-	public void moveInvalidToLocation2() throws StrategyException {
-		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
-		
-		game.startGame();
-		game.move(PieceType.FLAG, new Location2D(0,0), new Location2D(0,1));
+		// occupied by another same player piece
+		game.move(PieceType.MARSHAL, new Location2D(1,0), new Location2D(2,0));
 	}
 	
 	@Test(expected=StrategyException.class)
-	public void moveInvalidToLocation3() throws StrategyException {
+	public void moveTwoSpacesTest() throws StrategyException {
 		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
-		game.move(PieceType.FLAG, new Location2D(0,0), new Location2D(0,1));
+		game.move(PieceType.LIEUTENANT, new Location2D(0,1), new Location2D(0,3));
 	}
-	*/
+	
+	@Test(expected=StrategyException.class)
+	public void moveSameSpaceTest() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, new Location2D(0,1), new Location2D(0,1));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveDiagonallyTest() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, new Location2D(0,1), new Location2D(1,2));
+	}
+	
+	@Test
+	public void validMove() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult mResult= game.move(PieceType.LIEUTENANT, new Location2D(0,1), new Location2D(0,2));
+		MoveResult expectedResult= new MoveResult(MoveResultStatus.OK, 
+				new PieceLocationDescriptor(new Piece(PieceType.LIEUTENANT, PlayerColor.RED), new Location2D(0,2)));
+				
+		assertEquals(mResult.getBattleWinner(), expectedResult.getBattleWinner());
+		assertEquals(mResult.getStatus(), expectedResult.getStatus());
+	}
+	
 	
 
 }

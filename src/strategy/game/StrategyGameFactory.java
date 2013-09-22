@@ -16,6 +16,7 @@ import strategy.common.*;
 import strategy.game.common.*;
 import strategy.game.version.alpha.AlphaStrategyGameController;
 import strategy.game.version.beta.BetaStrategyGameControlller;
+import strategy.game.version.gamma.GammaStrategyGameController;
 
 /**
  * <p>
@@ -33,8 +34,6 @@ import strategy.game.version.beta.BetaStrategyGameControlller;
 public class StrategyGameFactory
 {
 	private final static StrategyGameFactory instance = new StrategyGameFactory();
-	private int numCaptain;
-	
 	/**
 	 * Default private constructor to ensure this is a singleton.
 	 */
@@ -73,5 +72,20 @@ public class StrategyGameFactory
 		throws StrategyException
 	{	
 		return new BetaStrategyGameControlller(redConfiguration, blueConfiguration);
+	}
+	
+	/**
+	 * Create a new Gamma Strategy game given the 
+	 * @param redConfiguration the initial starting configuration for the RED pieces
+	 * @param blueConfiguration the initial starting configuration for the BLUE pieces
+	 * @return the Gamma Strategy game instance with the initial configuration of pieces
+	 * @throws StrategyException if either configuration is incorrect
+	 */
+	public StrategyGameController makeGammaStrategyGame(
+			Collection<PieceLocationDescriptor> redConfiguration,
+			Collection<PieceLocationDescriptor> blueConfiguration)
+		throws StrategyException
+	{	
+		return new GammaStrategyGameController(redConfiguration, blueConfiguration);
 	}
 }

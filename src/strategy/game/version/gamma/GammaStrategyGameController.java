@@ -10,11 +10,13 @@ import java.util.Map;
 
 import strategy.common.PlayerColor;
 import strategy.common.StrategyException;
+import strategy.common.StrategyRuntimeException;
 import strategy.game.StrategyGameController;
 import strategy.game.common.Coordinate;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
 import strategy.game.common.MoveResult;
+import strategy.game.common.MoveResultStatus;
 import strategy.game.common.Piece;
 import strategy.game.common.PieceLocationDescriptor;
 import strategy.game.common.PieceType;
@@ -58,8 +60,73 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	@Override
 	public MoveResult move(PieceType piece, Location from, Location to)
 			throws StrategyException {
-		// TODO Auto-generated method stub
-		return null;
+		if (gameOver) {
+			throw new StrategyException("The game is over, you cannot make a move");
+		}
+		if (!gameStarted) {
+			throw new StrategyException("You must start the game!");
+		}
+		if (piece == PieceType.FLAG) {
+			throw new StrategyException("You cannot move the flag");
+		}
+		if (!board.containsKey(from) || !board.containsKey(to)) {
+			throw new StrategyException("Coordinates not on board");
+		}
+		if (getPieceAt(from) == null || getPieceAt(from).getType() != piece) {
+			throw new StrategyException("Specified piece is not located at given location");
+		}
+		
+		final Piece fromPiece, toPiece;
+		fromPiece = getPieceAt(from);
+		toPiece = getPieceAt(to);
+		
+		// if last player color is not set, this is the first move
+		if (lastPlayerColor == null) {
+			// first move cannot come from blue
+			if (fromPiece.getOwner() == PlayerColor.BLUE) {
+				throw new StrategyException("Blue cannot start the game");
+			}
+		}
+		
+		if (lastPlayerColor == fromPiece.getOwner()) {
+			throw new StrategyException("Same player cannot move twice in a row");
+		}
+		 
+		if (toPiece != null && fromPiece.getOwner() == toPiece.getOwner()) {
+			throw new StrategyException("Cannot move to a space with your own piece on it already");	
+		}
+		
+		checkLocations(from, to);
+		// TODO
+		MoveResult result = null;
+		
+		// if moving to an empty space
+		if (toPiece == null) {
+			board.put(from, null);
+			board.put(to, fromPiece);
+			
+			result = new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
+		}
+		
+		return result;
+	}
+	
+	
+	/**
+	 * Determines if moving to the given to location is valid from the given from location
+	 * @param from base location
+	 * @param to location to go
+	 * @throws StrategyException
+	 */
+	private void checkLocations(Location from, Location to) throws StrategyException {
+		try {
+			if (from.distanceTo(to) > 1) {
+				throw new StrategyException("Locations are too far apart");
+			}	
+		}
+		catch (StrategyRuntimeException e) {
+			throw new StrategyException(e.getMessage());
+		}
 	}
 
 	@Override
@@ -203,7 +270,4 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}
 	}
 	
-	
-
-
 }

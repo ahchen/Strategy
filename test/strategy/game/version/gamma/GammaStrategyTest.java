@@ -207,4 +207,87 @@ public class GammaStrategyTest {
 		game.startGame();
 		game.startGame();
 	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveBeforeStartGame() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		// move before game start
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveFlag() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.FLAG, new Location2D(0,1), new Location2D(0,2));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void locationOffBoard() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.MARSHAL, new Location2D(6,6), new Location2D(10,1));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveInvalidFromLocation() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		// Marshal located at 1,1
+		game.move(PieceType.MARSHAL, new Location2D(3,1), new Location2D(3,2));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveInvalidToLocation() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		// occupied by another same player piece
+		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(0,1));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveTwoSpacesTest() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,3));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveSameSpaceTest() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.COLONEL, new Location2D(2,1), new Location2D(2,1));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveDiagonallyTest() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.CAPTAIN, new Location2D(3,1), new Location2D(4,2));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void blueFirstMoveTest() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void playerMoveTwiceTest() throws StrategyException {
+		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,3));
+	}
 }

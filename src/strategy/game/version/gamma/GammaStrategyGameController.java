@@ -24,7 +24,7 @@ import strategy.game.version.StrategyGameControllerImpl;
 
 /**
  * @author Alex C
- *
+ * @version September 24, 2013
  */
 public class GammaStrategyGameController extends StrategyGameControllerImpl {
 
@@ -33,8 +33,12 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	private PlayerColor lastPlayerColor;
 	Collection<PieceLocationDescriptor> redSetup, blueSetup;
 	private Map<Location, Piece> board;
+	private PieceLocationDescriptor lastRedPieceLocation, lastBluePieceLocation;
+	private boolean redRepititionFlag, blueRepititionFlag;
+	private int numRedMovablePieces, numBlueMovablePieces;
 	
 	private static final int NUM_PIECES = 12;
+	private static final Piece CHOKE_POINT = new Piece(PieceType.CHOKE_POINT, null);
 	private static final Location[] CHOKE_POINT_LOCATIONS = 
 		{ new Location2D(2,2), new Location2D(2,3), new Location2D(3,2), new Location2D(3,3) };
 	// based on simple formula for translating locations( (0,0) = 1, (1,1) = 2 ...  (4,5) = 35,  (5,5) = 36)
@@ -47,16 +51,22 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		super(redPieces, bluePieces);
 	}
 
+	/*
+	 * @see strategy.game.StrategyGameController#startGame()
+	 */
 	@Override
 	public void startGame() throws StrategyException {
 		if(gameStarted) {
-			throw new StrategyException("Game Already In Progress");
+			throw new StrategyException("Game Already In Progress, Make a New Game");
 		}
 		gameStarted = true;
 		gameOver = false;
-		lastPlayerColor = null;		
+		lastPlayerColor = null;			
 	}
 
+	/*
+	 * @see strategy.game.StrategyGameController#move()
+	 */
 	@Override
 	public MoveResult move(PieceType piece, Location from, Location to)
 			throws StrategyException {
@@ -68,6 +78,9 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}
 		if (piece == PieceType.FLAG) {
 			throw new StrategyException("You cannot move the flag");
+		}
+		if (piece == PieceType.CHOKE_POINT) {
+			throw new StrategyException("You cannot move the choke point");
 		}
 		if (!board.containsKey(from) || !board.containsKey(to)) {
 			throw new StrategyException("Coordinates not on board");
@@ -81,11 +94,9 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		toPiece = getPieceAt(to);
 		
 		// if last player color is not set, this is the first move
-		if (lastPlayerColor == null) {
+		if (lastPlayerColor == null && fromPiece.getOwner() == PlayerColor.BLUE) {
 			// first move cannot come from blue
-			if (fromPiece.getOwner() == PlayerColor.BLUE) {
-				throw new StrategyException("Blue cannot start the game");
-			}
+			throw new StrategyException("Blue cannot start the game");
 		}
 		
 		if (lastPlayerColor == fromPiece.getOwner()) {
@@ -97,21 +108,31 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}
 		
 		checkLocations(from, to);
-		// TODO
-		MoveResult result = null;
+		checkRepitition(piece, from, to);
+		MoveResult result;
 		
 		// if moving to an empty space
 		if (toPiece == null) {
 			board.put(from, null);
 			board.put(to, fromPiece);
-			
 			result = new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
+		}
+		else {
+			result = battle(new PieceLocationDescriptor(fromPiece, from),
+					new PieceLocationDescriptor(toPiece, to));
+		}
+		
+		lastPlayerColor = fromPiece.getOwner();
+		
+		// game over
+		if (result.getStatus() != MoveResultStatus.OK) {
+			gameOver = true;
 		}
 		
 		return result;
 	}
 	
-	
+
 	/**
 	 * Determines if moving to the given to location is valid from the given from location
 	 * @param from base location
@@ -122,13 +143,140 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		try {
 			if (from.distanceTo(to) > 1) {
 				throw new StrategyException("Locations are too far apart");
-			}	
+			}
 		}
 		catch (StrategyRuntimeException e) {
 			throw new StrategyException(e.getMessage());
 		}
 	}
+	
+	/**
+	 * TODO
+	 * @param piece
+	 * @param from
+	 * @param to
+	 * @throws StrategyException 
+	 */
+	private void checkRepitition(PieceType piece, Location from, Location to) throws StrategyException {
+		Piece fromPiece = board.get(from);
+		PlayerColor pColor = fromPiece.getOwner();
+		
+		if (pColor == PlayerColor.RED) {
+			if (lastRedPieceLocation == null) {
+				lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
+			}
+			else {
+				if (lastRedPieceLocation.getPiece().equals(fromPiece) && lastRedPieceLocation.getLocation().equals(to)) {
+					if (redRepititionFlag) {
+						throw new StrategyException("Repitition Rule Violated");
+					}
+					else {
+						lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
+						redRepititionFlag = true;
+					}
+				}
+				else {
+					lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
+					redRepititionFlag = false;
+				}
+			}
+		}
+		else {
+			if (lastBluePieceLocation == null) {
+				lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
+			}
+			else {
+				if (lastBluePieceLocation.getPiece().equals(fromPiece) && lastBluePieceLocation.getLocation().equals(to)) {
+					if (blueRepititionFlag) {
+						throw new StrategyException("Repitition Rule Violated");
+					}
+					else {
+						lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
+						blueRepititionFlag = true;
+					}
+				}
+				else {
+					lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
+					blueRepititionFlag = false;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * TODO
+	 * @param from
+	 * @param to
+	 * @return
+	 * @throws StrategyException
+	 */
+	private MoveResult battle(PieceLocationDescriptor from,	PieceLocationDescriptor to) throws StrategyException {
+		final Piece fromPiece = from.getPiece();
+		final Piece toPiece = to.getPiece();
+		
+		final Location fromLoc = from.getLocation();
+		final Location toLoc = to.getLocation();
+		
+		final PieceLocationDescriptor newFrom = new PieceLocationDescriptor(fromPiece, toLoc);
+		final PieceLocationDescriptor newTo = new PieceLocationDescriptor(toPiece, fromLoc);
+		
+		final PlayerColor fromColor = fromPiece.getOwner();
+		
+		final int pieceComparison = fromPiece.getType().compareTo(toPiece.getType());
+		
+		// cannot move to a choke point
+		if (toPiece.getType() == PieceType.CHOKE_POINT) {
+			throw new StrategyException("Cannot Move to a Choke Point");
+		}
+		
+		if (pieceComparison == 0) {
+			board.put(fromLoc, null);
+			board.put(toLoc, null);
+			numRedMovablePieces--;
+			numBlueMovablePieces--;
+			return new MoveResult(MoveResultStatus.OK, null);
+		}
+		
+		// if the piece being attacked is a flag, that player wins
+		if (toPiece.getType() == PieceType.FLAG) {
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+					
+			if (fromColor == PlayerColor.BLUE) {
+				return new MoveResult(MoveResultStatus.BLUE_WINS, newFrom);
+			}
+			return new MoveResult(MoveResultStatus.RED_WINS, newFrom);
+		}
+		
+		// from Wins
+		if (pieceComparison < 0) {
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+			if (fromColor == PlayerColor.BLUE) {
+				numRedMovablePieces--;
+			}
+			else {
+				numBlueMovablePieces--;
+			}
+			return new MoveResult(MoveResultStatus.OK, newFrom);
+		}
+		else { // to Wins
+			board.put(toLoc, null);
+			board.put(fromLoc, toPiece);
+			if (fromColor == PlayerColor.BLUE) {
+				numBlueMovablePieces--;
+			}
+			else {
+				numRedMovablePieces--;
+			}
+			return new MoveResult(MoveResultStatus.OK, newTo);
+		}
+	}
 
+	
+	/*
+	 * @see strategy.game.StrategyGameController#getPieceAt()
+	 */
 	@Override
 	public Piece getPieceAt(Location location) {
 		return board.get(location);
@@ -228,6 +376,9 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	protected void setVariables(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces) 
 	{
 		gameStarted = false;
@@ -236,8 +387,17 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		redSetup = redPieces;
 		blueSetup = bluePieces;
 		board = new HashMap<Location,Piece>();
+		lastRedPieceLocation = null;
+		lastBluePieceLocation = null;
+		redRepititionFlag = false;
+		blueRepititionFlag = false;
+		numRedMovablePieces = 11;
+		numBlueMovablePieces = 11;
 	}
 	
+	/**
+	 * 
+	 */
 	protected void initializeBoard() 
 	{
 		final Iterator<PieceLocationDescriptor> redIter, blueIter;
@@ -263,10 +423,8 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}	
 		
 		// set choke pieces
-		final Piece chokePoint = new Piece(PieceType.CHOKE_POINT, null);
-		
 		for (int i = 0; i < CHOKE_POINT_LOCATIONS.length; i++) {
-			board.put(CHOKE_POINT_LOCATIONS[i], chokePoint);
+			board.put(CHOKE_POINT_LOCATIONS[i], CHOKE_POINT);
 		}
 	}
 	

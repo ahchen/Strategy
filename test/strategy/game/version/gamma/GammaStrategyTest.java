@@ -15,6 +15,8 @@ import strategy.game.StrategyGameController;
 import strategy.game.StrategyGameFactory;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
+import strategy.game.common.MoveResult;
+import strategy.game.common.MoveResultStatus;
 import strategy.game.common.Piece;
 import strategy.game.common.PieceLocationDescriptor;
 import strategy.game.common.PieceType;
@@ -276,7 +278,7 @@ public class GammaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void blueFirstMoveTest() throws StrategyException {
-		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
 		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
@@ -284,10 +286,273 @@ public class GammaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void playerMoveTwiceTest() throws StrategyException {
-		game = gameFactory.makeBetaStrategyGame(redCollection, blueCollection);
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
 		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
 		game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,3));
+	} 
+	
+	@Test(expected=StrategyException.class)
+	public void moveChokePointTest() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		game.move(PieceType.CHOKE_POINT, new Location2D(2,2), new Location2D(1,2));
+	} 
+	
+	@Test
+	public void validMove() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult mResult= game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(1,2));
+		MoveResult expectedResult= new MoveResult(MoveResultStatus.OK, 
+				new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.RED), new Location2D(1,2)));
+		
+		// no piece at old location
+		assertNull(game.getPieceAt(new Location2D(1,1)));
+		// piece at new location
+		assertEquals(game.getPieceAt(new Location2D(1,2)), new Piece(PieceType.MARSHAL, PlayerColor.RED));
+		//verify MoveResult
+		assertEquals(mResult.getBattleWinner(), expectedResult.getBattleWinner());
+		assertEquals(mResult.getStatus(), expectedResult.getStatus());
 	}
+	
+	@Test
+	public void redWins() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		
+		// flag captured
+		res = game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
+		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.RED), new Location2D(5,4)));
+	}
+	
+	@Test
+	public void blueWins() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+		
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,2));
+		
+		// flag captured
+		res = game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,1));
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.SERGEANT, PlayerColor.BLUE), new Location2D(0,1)));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveAfterFinish() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		// red captures flag in this move, game over
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
+		
+		// move after game without restarting invalid
+		game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,3));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void startGameAfterFinish() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		// red captures flag in this move, game over
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
+	
+		// start game after a finish
+		game.startGame();
+		// make sure moves work
+		assertNotNull(game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2)));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveToChokePointTest() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		game.move(PieceType.COLONEL, new Location2D(2,1), new Location2D(2,2));
+	}
+	
+	@Test
+	public void battleTie() throws StrategyException {
+		// switch the marshal and lieutenant pieces for red configuration to make a tie battle easier
+		redCollection.remove(new PieceLocationDescriptor(redPieces[7], everySpace[7]));
+		redCollection.remove(new PieceLocationDescriptor(redPieces[10], everySpace[10]));
+		
+		redCollection.add(new PieceLocationDescriptor(redPieces[7], everySpace[10]));
+		redCollection.add(new PieceLocationDescriptor(redPieces[10], everySpace[7]));
+		
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		MoveResult res;
+		
+		game.move(PieceType.MARSHAL, new Location2D(4,1), new Location2D(4,2));
+		game.move(PieceType.MARSHAL, new Location2D(4,4), new Location2D(4,3));
+		res = game.move(PieceType.MARSHAL, new Location2D(4,2), new Location2D(4,3));
+		
+		// both pieces should be removed
+		assertNull(game.getPieceAt(new Location2D(4,2)));
+		assertNull(game.getPieceAt(new Location2D(4,3)));
+		
+		// check moveresult
+		assertNull(res.getBattleWinner());
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+	}
+	
+	@Test
+	public void attackerWin() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		MoveResult res;
+		
+		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(1,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.MARSHAL, new Location2D(1,2), new Location2D(1,3));
+		game.move(PieceType.CAPTAIN, new Location2D(0,5), new Location2D(0,4));
+		
+		res = game.move(PieceType.MARSHAL, new Location2D(1,3), new Location2D(0,3));
+		
+		assertNull(game.getPieceAt(new Location2D(1,3)));
+		assertEquals(game.getPieceAt(new Location2D(0,3)), new Piece(PieceType.MARSHAL, PlayerColor.RED));
+		
+		// check moveresult
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.RED), new Location2D(0,3)));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+	}
+	
+	@Test
+	public void defenderWin() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		MoveResult res;
+		
+		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(1,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.MARSHAL, new Location2D(1,2), new Location2D(1,3));
+		
+		res = game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(1,3));
+		
+		assertNull(game.getPieceAt(new Location2D(1,3)));
+		
+		assertEquals(game.getPieceAt(new Location2D(0,3)), new Piece(PieceType.MARSHAL, PlayerColor.RED));
+		
+		// check moveresult
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MARSHAL, PlayerColor.RED), new Location2D(0,3)));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+	} 
+	
+	@Test(expected=StrategyException.class)
+	public void redMoveRepititionTest() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,1));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,3), new Location2D(1,2));
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void blueMoveREpititionTest() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,3), new Location2D(1,4));
+		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void repititonRuleOnStrike() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+
+		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+		game.move(PieceType.MARSHAL, new Location2D(4,4), new Location2D(4,3));
+		game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,1));
+		game.move(PieceType.MARSHAL, new Location2D(4,3), new Location2D(4,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+	}
+	
+	@Test
+	public void repititonRuleWithStrikeMovingPiece() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		MoveResult res;
+
+		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+		game.move(PieceType.MARSHAL, new Location2D(4,4), new Location2D(4,3));
+		game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,3));
+		// marshal piece forced to 4,2 (not moved there)
+		game.move(PieceType.MARSHAL, new Location2D(4,2), new Location2D(4,3));
+		game.move(PieceType.COLONEL, new Location2D(4,0), new Location2D(4,1));
+		// moving back to 4,2 should be valid since it was forced there
+		res = game.move(PieceType.MARSHAL, new Location2D(4,3), new Location2D(4,2));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void repititonRuleWithStrikeMovingPiece2() throws StrategyException {
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		
+		game.startGame();
+		
+		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(1,2));
+		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+		// marshal moves to 1,3 and overtakes lieutenant position
+		game.move(PieceType.MARSHAL, new Location2D(1,2), new Location2D(1,3));
+		game.move(PieceType.SERGEANT, new Location2D(0,4), new Location2D(0,3));
+		game.move(PieceType.MARSHAL, new Location2D(1,3), new Location2D(1,2));
+		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
+		// should violate rule
+		game.move(PieceType.MARSHAL, new Location2D(1,2), new Location2D(1,3));
+	}
+	
 }

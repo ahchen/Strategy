@@ -512,20 +512,25 @@ public class GammaStrategyTest {
 		
 		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
 	}
-	//TODO
+
 	@Test
 	public void repetitonRuleOnStrike() throws StrategyException {
 		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
+		
+		MoveResult res;
 
 		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
 		game.move(PieceType.MARSHAL, new Location2D(4,4), new Location2D(4,3));
 		game.move(PieceType.LIEUTENANT, new Location2D(4,2), new Location2D(4,1));
 		game.move(PieceType.MARSHAL, new Location2D(4,3), new Location2D(4,2));
-		game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+		res = game.move(PieceType.LIEUTENANT, new Location2D(4,1), new Location2D(4,2));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
+		
 	}
-	//TODO
+
 	@Test
 	public void repetitonRuleWithStrikeMovingPiece() throws StrategyException {
 		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
@@ -545,7 +550,7 @@ public class GammaStrategyTest {
 		
 		assertEquals(res.getStatus(), MoveResultStatus.OK);
 	}
-	//TODO
+
 	@Test
 	public void repetitonRuleWithStrikeMovingPiece2() throws StrategyException {
 		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);

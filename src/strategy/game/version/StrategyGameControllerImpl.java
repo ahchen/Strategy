@@ -13,6 +13,8 @@ import strategy.common.StrategyRuntimeException;
 import strategy.game.StrategyGameController;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
+import strategy.game.common.MoveResult;
+import strategy.game.common.MoveResultStatus;
 import strategy.game.common.Piece;
 import strategy.game.common.PieceLocationDescriptor;
 import strategy.game.common.PieceType;
@@ -32,6 +34,7 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 	protected PieceLocationDescriptor lastRedPieceLocation, lastBluePieceLocation;
 	protected boolean redRepetitionFlag, blueRepetitionFlag;
 	protected int numRedMovablePieces, numBlueMovablePieces;
+	protected int numMoves;
 	
 	protected static int NUM_PIECES = 0;
 	protected static final Piece CHOKE_POINT = new Piece(PieceType.CHOKE_POINT, null);
@@ -57,8 +60,18 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		initializeBoard();
 	}
 	
+	/**
+	 * Sets necessary variables for the given type of game being created
+	 * @param redPieces collection of red pieces
+	 * @param bluePieces collection of blue pieces
+	 */
 	protected abstract void setVariables(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces);
 	
+	/**
+	 * Validates that the collection given only contains valid piece/location combinations for type of game created
+	 * @param pieces the collection of pieces to validate
+	 * @throws StrategyException thrown if the collection is deemed invalid
+	 */
 	protected abstract void validatePiecesAndLocations(Collection<PieceLocationDescriptor> pieces) throws StrategyException;
 	
 	/*
@@ -102,13 +115,101 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		}
 	}
 	
+	/*
+	 * @see strategy.game.StrategyGameController#move()
+	 */
+	public MoveResult move(PieceType piece, Location from, Location to)
+			throws StrategyException {
+		
+		checkValidMoveRequest(piece, from, to);
+		
+		MoveResult result;
+		final Piece fromPiece, toPiece;
+		fromPiece = getPieceAt(from);
+		toPiece = getPieceAt(to);
+		
+		checkLocations(from, to);
+		result = checkRepetition(piece, from, to);
+		
+		// if check repetition returned a MoveResult, then repetition rule is violated and 
+		// we return the result
+		if (result != null) {
+			return result;
+		}
+		
+		// if moving to an empty space
+		if (toPiece == null) {
+			board.put(from, null);
+			board.put(to, fromPiece);
+			result = new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
+		}
+		else if (toPiece.getType() == PieceType.CHOKE_POINT) {
+			throw new StrategyException("Cannot Move to a Choke Point");
+		}
+		else {
+			result = battle(new PieceLocationDescriptor(fromPiece, from),
+					new PieceLocationDescriptor(toPiece, to));
+		}
+		
+		lastPlayerColor = fromPiece.getOwner();
+		
+		result = checkMovablePieces(result);
+		 
+		// game over
+		if (result.getStatus() != MoveResultStatus.OK) {
+			gameOver = true;
+		}
+		
+		return result;
+	}
+	
+	private void checkValidMoveRequest(PieceType piece, Location from,
+			Location to) throws StrategyException {
+		if (gameOver) {
+			throw new StrategyException("The game is over, you cannot make a move");
+		}
+		if (!gameStarted) {
+			throw new StrategyException("You must start the game!");
+		}
+		if (piece == PieceType.FLAG) {
+			throw new StrategyException("You cannot move the flag");
+		}
+		if (piece == PieceType.CHOKE_POINT) {
+			throw new StrategyException("You cannot move the choke point");
+		}
+		if (!board.containsKey(from) || !board.containsKey(to)) {
+			throw new StrategyException("Coordinates not on board");
+		}
+		if (getPieceAt(from) == null || getPieceAt(from).getType() != piece) {
+			throw new StrategyException("Specified piece is not located at given location");
+		}
+		
+		final Piece fromPiece, toPiece;
+		fromPiece = getPieceAt(from);
+		toPiece = getPieceAt(to);
+		
+		// if last player color is not set, this is the first move
+		if (lastPlayerColor == null && fromPiece.getOwner() == PlayerColor.BLUE) {
+			// first move cannot come from blue
+			throw new StrategyException("Blue cannot start the game");
+		}
+		
+		if (lastPlayerColor == fromPiece.getOwner()) {
+			throw new StrategyException("Same player cannot move twice in a row");
+		}
+		 
+		if (toPiece != null && fromPiece.getOwner() == toPiece.getOwner()) {
+			throw new StrategyException("Cannot move to a space with your own piece on it already");
+		}
+	}
+
 	/**
 	 * Determines if moving to the given to location is valid from the given from location
 	 * @param from base location
 	 * @param to location to go
 	 * @throws StrategyException
 	 */
-	protected void checkLocations(Location from, Location to) throws StrategyException {
+	private void checkLocations(Location from, Location to) throws StrategyException {
 		try {
 			if (from.distanceTo(to) > 1) {
 				throw new StrategyException("Locations are too far apart");
@@ -118,6 +219,161 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 			throw new StrategyException(e.getMessage());
 		}
 	}
+	
+	/**
+	 * Handles battling and updates the board accordingly
+	 * @param from piece being moved
+	 * @param to piece being attacked
+	 * @return move result after the battle
+	 */
+	private MoveResult battle(PieceLocationDescriptor from,PieceLocationDescriptor to) {
+		final Piece fromPiece = from.getPiece();
+		final Piece toPiece = to.getPiece();
+		
+		final Location fromLoc = from.getLocation();
+		final Location toLoc = to.getLocation();
+		
+		final PieceLocationDescriptor newFrom = new PieceLocationDescriptor(fromPiece, toLoc);
+		final PieceLocationDescriptor newTo = new PieceLocationDescriptor(toPiece, fromLoc);
+		
+		final PlayerColor fromColor = fromPiece.getOwner();
+		
+		final int pieceComparison = fromPiece.getType().compareTo(toPiece.getType());
+		
+		if (pieceComparison == 0) {
+			board.put(fromLoc, null);
+			board.put(toLoc, null);
+			numRedMovablePieces--;
+			numBlueMovablePieces--;
+			return new MoveResult(MoveResultStatus.OK, null);
+		}
+		
+		// if the piece being attacked is a flag, that player wins
+		if (toPiece.getType() == PieceType.FLAG) {
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+					
+			if (fromColor == PlayerColor.BLUE) {
+				return new MoveResult(MoveResultStatus.BLUE_WINS, newFrom);
+			}
+			return new MoveResult(MoveResultStatus.RED_WINS, newFrom);
+		}
+		
+		// from Wins
+		if (pieceComparison < 0) {
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+			if (fromColor == PlayerColor.BLUE) {
+				numRedMovablePieces--;
+			}
+			else {
+				numBlueMovablePieces--;
+			}
+			return new MoveResult(MoveResultStatus.OK, newFrom);
+		}
+		else { // to Wins
+			board.put(toLoc, null);
+			board.put(fromLoc, toPiece);
+			if (fromColor == PlayerColor.BLUE) {
+				numBlueMovablePieces--;
+			}
+			else {
+				numRedMovablePieces--;
+			}
+			return new MoveResult(MoveResultStatus.OK, newTo);
+		}
+	}
+	
+	/**
+	 * Checks if the current piece + move will violate the move repetition rule
+	 * @param piece piece being moved
+	 * @param from location the piece is being moved from
+	 * @param to location piece is being moved to
+	 * @return MoveResult if the move results in a repetition violation and the other play wins
+	 * 		   otherwise returns null if move is valid
+	 */
+	private MoveResult checkRepetition(PieceType piece, Location from, Location to) {
+		final Piece fromPiece = board.get(from);
+		final PlayerColor pColor = fromPiece.getOwner();
+		
+		if (pColor == PlayerColor.RED) {
+			// if last location is null, this is the first move.
+			// just set the last piece location
+			if (lastRedPieceLocation == null) {
+				lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
+			}
+			else {
+				// if the locations is equal to the previous location and the pieces are the same
+				if (lastRedPieceLocation.getPiece().equals(fromPiece) && lastRedPieceLocation.getLocation().equals(to)) {
+					// if the repetition flag is set, the rule is violated
+					if (redRepetitionFlag) {
+						return new MoveResult(MoveResultStatus.BLUE_WINS, null);
+					}
+					else {
+						// no violation yet. set the last piece and location and flag to true
+						lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
+						redRepetitionFlag = true;
+					}
+				}
+				else {
+					// different piece or location, reset the location and flag to false
+					lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
+					redRepetitionFlag = false;
+				}
+			}
+		}
+		else { // BLUE player
+			// if last location is null, this is the first move.
+			// just set the last piece location
+			if (lastBluePieceLocation == null) {
+				lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
+			}
+			else {
+				// if the locations is equal to the previous location and the pieces are the same
+				if (lastBluePieceLocation.getPiece().equals(fromPiece) && lastBluePieceLocation.getLocation().equals(to)) {
+					// if the repetition flag is set, the rule is violated
+					if (blueRepetitionFlag) {
+						return new MoveResult(MoveResultStatus.RED_WINS, null);
+					}
+					else {
+						// no violation yet. set the last piece and location and flag to true
+						lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
+						blueRepetitionFlag = true;
+					}
+				}
+				else {
+					// different piece or location, reset the location and flag to false
+					lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
+					blueRepetitionFlag = false;
+				}
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Checks to see if either player (or both) have no remaining movable pieces
+	 * @param result the move result from a given move
+	 * @return a move result corresponding to a winner or draw if either player, or both
+	 * 			don't have any movable pieces remaining. If both have movable pieces,
+	 * 			the given MoveResult is returned.
+	 */
+	private MoveResult checkMovablePieces(MoveResult result) {
+		
+		if (numRedMovablePieces == 0 && numBlueMovablePieces == 0) {
+			return new MoveResult(MoveResultStatus.DRAW, null);
+		}
+		else if (numRedMovablePieces == 0) {
+			return new MoveResult(MoveResultStatus.BLUE_WINS, result.getBattleWinner());
+		}
+		else if (numBlueMovablePieces == 0) {
+			return new MoveResult(MoveResultStatus.RED_WINS, result.getBattleWinner());
+		}
+		else {
+			return result;
+		}
+	}
+	
 	
 	/*
 	 * @see strategy.game.StrategyGameController#getPieceAt()

@@ -73,9 +73,14 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 			throw new StrategyException("Cannot move to a space with your own piece on it already");
 		}
 		
-		checkLocations(from, to);
-		checkRepetition(piece, from, to);
 		MoveResult result;
+		
+		checkLocations(from, to);
+		result = checkRepetition(piece, from, to);
+		
+		if (result != null) {
+			return result;
+		}
 		
 		// if moving to an empty space
 		if (toPiece == null) {
@@ -93,15 +98,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		
 		lastPlayerColor = fromPiece.getOwner();
 		
-		if (numRedMovablePieces == 0) {
-			result = new MoveResult(MoveResultStatus.BLUE_WINS, result.getBattleWinner());
-		}
-		if (numBlueMovablePieces == 0) {
-			result = new MoveResult(MoveResultStatus.RED_WINS, result.getBattleWinner());
-		}
-		if (numRedMovablePieces == 0 && numBlueMovablePieces == 0) {
-			result = new MoveResult(MoveResultStatus.DRAW, null);
-		}
+		result = checkMovablePieces(result);
 		 
 		// game over
 		if (result.getStatus() != MoveResultStatus.OK) {
@@ -116,9 +113,11 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	 * @param piece piece being moved
 	 * @param from location the piece is being moved from
 	 * @param to location piece is being moved to
+	 * @return MoveResult if the move results in a repetition violation and the other play wins
+	 * 		   otherwise returns null if move is valid
 	 * @throws StrategyException if the move violates the repetition rule
 	 */
-	private void checkRepetition(PieceType piece, Location from, Location to) throws StrategyException {
+	private MoveResult checkRepetition(PieceType piece, Location from, Location to) throws StrategyException {
 		final Piece fromPiece = board.get(from);
 		final PlayerColor pColor = fromPiece.getOwner();
 		
@@ -133,7 +132,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 				if (lastRedPieceLocation.getPiece().equals(fromPiece) && lastRedPieceLocation.getLocation().equals(to)) {
 					// if the repetition flag is set, the rule is violated
 					if (redRepetitionFlag) {
-						throw new StrategyException("Repitition Rule Violated");
+						return new MoveResult(MoveResultStatus.BLUE_WINS, null);
 					}
 					else {
 						// no violation yet. set the last piece and location and flag to true
@@ -159,7 +158,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 				if (lastBluePieceLocation.getPiece().equals(fromPiece) && lastBluePieceLocation.getLocation().equals(to)) {
 					// if the repetition flag is set, the rule is violated
 					if (blueRepetitionFlag) {
-						throw new StrategyException("Repitition Rule Violated");
+						return new MoveResult(MoveResultStatus.RED_WINS, null);
 					}
 					else {
 						// no violation yet. set the last piece and location and flag to true
@@ -174,6 +173,28 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 				}
 			}
 		}
+		return null;
+	}
+	
+	/**
+	 * TODO
+	 * @param result
+	 * @return
+	 */
+	private MoveResult checkMovablePieces(MoveResult result) {
+		
+		if (numRedMovablePieces == 0 && numBlueMovablePieces == 0) {
+			return new MoveResult(MoveResultStatus.DRAW, null);
+		}
+		else if (numRedMovablePieces == 0) {
+			return new MoveResult(MoveResultStatus.BLUE_WINS, result.getBattleWinner());
+		}
+		else if (numBlueMovablePieces == 0) {
+			return new MoveResult(MoveResultStatus.RED_WINS, result.getBattleWinner());
+		}
+		else {
+			return result;
+		}		
 	}
 	
 	/**

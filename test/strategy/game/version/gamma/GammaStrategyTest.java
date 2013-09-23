@@ -478,33 +478,39 @@ public class GammaStrategyTest {
 		assertEquals(res.getStatus(), MoveResultStatus.OK);
 	} 
 	
-	
-	//TODO
 	@Test
 	public void redMoveRepetitionTest() throws StrategyException {
 		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
-
+		
+		MoveResult res;
+		
 		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
 		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
 		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,1));
 		game.move(PieceType.LIEUTENANT, new Location2D(1,3), new Location2D(1,2));
-		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		res = game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
 	}
-	//TODO
+
 	@Test
 	public void blueMoveRepetitionTest() throws StrategyException {
 		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
 
+		MoveResult res;
+		
 		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
 		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
 		game.move(PieceType.SERGEANT, new Location2D(5,2), new Location2D(5,3));
 		game.move(PieceType.LIEUTENANT, new Location2D(1,3), new Location2D(1,4));
 		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,2));
-		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+		res = game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
 	}
 	//TODO
 	@Test

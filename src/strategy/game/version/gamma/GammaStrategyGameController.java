@@ -11,7 +11,6 @@ import java.util.Map;
 import strategy.common.PlayerColor;
 import strategy.common.StrategyException;
 import strategy.common.StrategyRuntimeException;
-import strategy.game.StrategyGameController;
 import strategy.game.common.Coordinate;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
@@ -29,12 +28,12 @@ import strategy.game.version.StrategyGameControllerImpl;
 public class GammaStrategyGameController extends StrategyGameControllerImpl {
 
 	private boolean gameStarted;
-	private boolean gameOver;	
+	private boolean gameOver;
 	private PlayerColor lastPlayerColor;
 	Collection<PieceLocationDescriptor> redSetup, blueSetup;
 	private Map<Location, Piece> board;
 	private PieceLocationDescriptor lastRedPieceLocation, lastBluePieceLocation;
-	private boolean redRepititionFlag, blueRepititionFlag;
+	private boolean redRepetitionFlag, blueRepetitionFlag;
 	private int numRedMovablePieces, numBlueMovablePieces;
 	
 	private static final int NUM_PIECES = 12;
@@ -47,7 +46,8 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	private static final int RED_SPACE_TOTAL = 78;
 	private static final int BLUE_SPACE_TOTAL = 366;
 	
-	public GammaStrategyGameController(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
+	public GammaStrategyGameController(Collection<PieceLocationDescriptor> redPieces, 
+			Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
 		super(redPieces, bluePieces);
 	}
 
@@ -61,7 +61,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}
 		gameStarted = true;
 		gameOver = false;
-		lastPlayerColor = null;			
+		lastPlayerColor = null;
 	}
 
 	/*
@@ -104,11 +104,11 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}
 		 
 		if (toPiece != null && fromPiece.getOwner() == toPiece.getOwner()) {
-			throw new StrategyException("Cannot move to a space with your own piece on it already");	
+			throw new StrategyException("Cannot move to a space with your own piece on it already");
 		}
 		
 		checkLocations(from, to);
-		checkRepitition(piece, from, to);
+		checkRepetition(piece, from, to);
 		MoveResult result;
 		
 		// if moving to an empty space
@@ -124,6 +124,16 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		
 		lastPlayerColor = fromPiece.getOwner();
 		
+		if (numRedMovablePieces == 0) {
+			result = new MoveResult(MoveResultStatus.BLUE_WINS, result.getBattleWinner());
+		}
+		if (numBlueMovablePieces == 0) {
+			result = new MoveResult(MoveResultStatus.RED_WINS, result.getBattleWinner());
+		}
+		if (numRedMovablePieces == 0 && numBlueMovablePieces == 0) {
+			result = new MoveResult(MoveResultStatus.DRAW, null);
+		}
+		 
 		// game over
 		if (result.getStatus() != MoveResultStatus.OK) {
 			gameOver = true;
@@ -151,66 +161,78 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	}
 	
 	/**
-	 * TODO
-	 * @param piece
-	 * @param from
-	 * @param to
-	 * @throws StrategyException 
+	 * Checks if the current piece + move will violate the move repetition rule
+	 * @param piece piece being moved
+	 * @param from location the piece is being moved from
+	 * @param to location piece is being moved to
+	 * @throws StrategyException if the move violates the repetition rule
 	 */
-	private void checkRepitition(PieceType piece, Location from, Location to) throws StrategyException {
-		Piece fromPiece = board.get(from);
-		PlayerColor pColor = fromPiece.getOwner();
+	private void checkRepetition(PieceType piece, Location from, Location to) throws StrategyException {
+		final Piece fromPiece = board.get(from);
+		final PlayerColor pColor = fromPiece.getOwner();
 		
 		if (pColor == PlayerColor.RED) {
+			// if last location is null, this is the first move.
+			// just set the last piece location
 			if (lastRedPieceLocation == null) {
 				lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
 			}
 			else {
+				// if the locations is equal to the previous location and the pieces are the same
 				if (lastRedPieceLocation.getPiece().equals(fromPiece) && lastRedPieceLocation.getLocation().equals(to)) {
-					if (redRepititionFlag) {
+					// if the repetition flag is set, the rule is violated
+					if (redRepetitionFlag) {
 						throw new StrategyException("Repitition Rule Violated");
 					}
 					else {
+						// no violation yet. set the last piece and location and flag to true
 						lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
-						redRepititionFlag = true;
+						redRepetitionFlag = true;
 					}
 				}
 				else {
+					// different piece or location, reset the location and flag to false
 					lastRedPieceLocation = new PieceLocationDescriptor(fromPiece, from);
-					redRepititionFlag = false;
+					redRepetitionFlag = false;
 				}
 			}
 		}
-		else {
+		else { // BLUE player
+			// if last location is null, this is the first move.
+			// just set the last piece location
 			if (lastBluePieceLocation == null) {
 				lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
 			}
 			else {
+				// if the locations is equal to the previous location and the pieces are the same
 				if (lastBluePieceLocation.getPiece().equals(fromPiece) && lastBluePieceLocation.getLocation().equals(to)) {
-					if (blueRepititionFlag) {
+					// if the repetition flag is set, the rule is violated
+					if (blueRepetitionFlag) {
 						throw new StrategyException("Repitition Rule Violated");
 					}
 					else {
+						// no violation yet. set the last piece and location and flag to true
 						lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
-						blueRepititionFlag = true;
+						blueRepetitionFlag = true;
 					}
 				}
 				else {
+					// different piece or location, reset the location and flag to false
 					lastBluePieceLocation = new PieceLocationDescriptor(fromPiece, from);
-					blueRepititionFlag = false;
+					blueRepetitionFlag = false;
 				}
 			}
 		}
 	}
 	
 	/**
-	 * TODO
-	 * @param from
-	 * @param to
-	 * @return
+	 * Handles battling and updates the board accordingly
+	 * @param from piece being moved
+	 * @param to piece being attacked
+	 * @return move result after the battle
 	 * @throws StrategyException
 	 */
-	private MoveResult battle(PieceLocationDescriptor from,	PieceLocationDescriptor to) throws StrategyException {
+	private MoveResult battle(PieceLocationDescriptor from,PieceLocationDescriptor to) throws StrategyException {
 		final Piece fromPiece = from.getPiece();
 		final Piece toPiece = to.getPiece();
 		
@@ -309,7 +331,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		PieceLocationDescriptor thisPiece;
 		final PieceLocationDescriptor firstPiece;
 		int thisPieceLocation;
-		int spaceTotal = 0;	
+		int spaceTotal = 0;
 		
 		final Iterator<PieceLocationDescriptor> pieceIter, firstPieceIter;
 		pieceIter = playerPieces.iterator();
@@ -332,7 +354,8 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		{
 			thisPiece = pieceIter.next();
 			// hash location to simple number
-			thisPieceLocation = thisPiece.getLocation().getCoordinate(Coordinate.X_COORDINATE) + (thisPiece.getLocation().getCoordinate(Coordinate.Y_COORDINATE) * 6) + 1;
+			thisPieceLocation = thisPiece.getLocation().getCoordinate(Coordinate.X_COORDINATE) 
+					+ (thisPiece.getLocation().getCoordinate(Coordinate.Y_COORDINATE) * 6) + 1;
 			
 			spaceTotal -= thisPieceLocation;
 			
@@ -358,7 +381,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 					numSergeant--;
 					break;
 				default:
-					throw new StrategyException("Invalid Piece");	
+					throw new StrategyException("Invalid Piece");
 			}
 		}
 		
@@ -382,15 +405,15 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	protected void setVariables(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces) 
 	{
 		gameStarted = false;
-		gameOver = false;	
+		gameOver = false;
 		lastPlayerColor = null;
 		redSetup = redPieces;
 		blueSetup = bluePieces;
 		board = new HashMap<Location,Piece>();
 		lastRedPieceLocation = null;
 		lastBluePieceLocation = null;
-		redRepititionFlag = false;
-		blueRepititionFlag = false;
+		redRepetitionFlag = false;
+		blueRepetitionFlag = false;
 		numRedMovablePieces = 11;
 		numBlueMovablePieces = 11;
 	}
@@ -420,7 +443,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 			// fill board with pieces
 			board.put(singleRedPiece.getLocation(), singleRedPiece.getPiece());
 			board.put(singleBluePiece.getLocation(), singleBluePiece.getPiece());
-		}	
+		}
 		
 		// set choke pieces
 		for (int i = 0; i < CHOKE_POINT_LOCATIONS.length; i++) {

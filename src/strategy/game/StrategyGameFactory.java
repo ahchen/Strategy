@@ -70,7 +70,7 @@ public class StrategyGameFactory
 			Collection<PieceLocationDescriptor> redConfiguration,
 			Collection<PieceLocationDescriptor> blueConfiguration)
 		throws StrategyException
-	{	
+	{
 		return new BetaStrategyGameControlller(redConfiguration, blueConfiguration);
 	}
 	
@@ -85,7 +85,7 @@ public class StrategyGameFactory
 			Collection<PieceLocationDescriptor> redConfiguration,
 			Collection<PieceLocationDescriptor> blueConfiguration)
 		throws StrategyException
-	{	
+	{
 		return new GammaStrategyGameController(redConfiguration, blueConfiguration);
 	}
 }

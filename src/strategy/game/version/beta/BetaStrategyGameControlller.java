@@ -21,7 +21,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	
 	private int numMoves;
 	private boolean gameStarted;
-	private boolean gameOver;	
+	private boolean gameOver;
 	private PlayerColor lastPlayerColor;
 	Collection<PieceLocationDescriptor> redSetup, blueSetup;
 	private final Map<Location, Piece> board;
@@ -33,7 +33,8 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	 * @param bluePieces blue player pieces
 	 * @throws StrategyException
 	 */
-	public BetaStrategyGameControlller(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
+	public BetaStrategyGameControlller(Collection<PieceLocationDescriptor> redPieces, 
+			Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
 		
 		if (redPieces == null || bluePieces == null) {
 			throw new StrategyException("Not Given Both Configurations");
@@ -84,7 +85,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 			// fill board with pieces
 			board.put(singleRedPiece.getLocation(), singleRedPiece.getPiece());
 			board.put(singleBluePiece.getLocation(), singleBluePiece.getPiece());
-		}	
+		}
 	}
 	
 	/* 
@@ -143,7 +144,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		}
 		 
 		if (toPiece != null && fromPiece.getOwner() == toPiece.getOwner()) {
-			throw new StrategyException("Cannot move to a space with your own piece on it already");	
+			throw new StrategyException("Cannot move to a space with your own piece on it already");
 		}
 		
 		checkLocations(from, to);
@@ -302,7 +303,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		try {
 			if (from.distanceTo(to) > 1) {
 				throw new StrategyException("Locations are too far apart");
-			}	
+			}
 		}
 		catch (StrategyRuntimeException e) {
 			throw new StrategyException(e.getMessage());
@@ -342,7 +343,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		PieceLocationDescriptor thisPiece;
 		final PieceLocationDescriptor firstPiece;
 		int thisPieceLocation;
-		int spaceTotal = 0;	
+		int spaceTotal = 0;
 		
 		final Iterator<PieceLocationDescriptor> pieceIter, firstPieceIter;
 		pieceIter = playerPieces.iterator();
@@ -365,7 +366,8 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 		{
 			thisPiece = pieceIter.next();
 			// hash location to simple number
-			thisPieceLocation = thisPiece.getLocation().getCoordinate(Coordinate.X_COORDINATE) + (thisPiece.getLocation().getCoordinate(Coordinate.Y_COORDINATE) * 6) + 1;
+			thisPieceLocation = thisPiece.getLocation().getCoordinate(Coordinate.X_COORDINATE)
+					+ (thisPiece.getLocation().getCoordinate(Coordinate.Y_COORDINATE) * 6) + 1;
 			
 			spaceTotal -= thisPieceLocation;
 			
@@ -391,7 +393,7 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 					numSergeant--;
 					break;
 				default:
-					throw new StrategyException("Invalid Piece");	
+					throw new StrategyException("Invalid Piece");
 			}
 		}
 		

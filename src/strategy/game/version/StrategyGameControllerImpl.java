@@ -22,7 +22,8 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 	 * @param bluePieces
 	 * @throws StrategyException
 	 */
-	public StrategyGameControllerImpl(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
+	protected StrategyGameControllerImpl(Collection<PieceLocationDescriptor> redPieces, 
+			Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
 		validatePiecesAndLocations(redPieces);
 		validatePiecesAndLocations(bluePieces);
 		setVariables(redPieces, bluePieces);

@@ -6,11 +6,9 @@ package strategy.game.version.gamma;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import strategy.common.PlayerColor;
 import strategy.common.StrategyException;
-import strategy.common.StrategyRuntimeException;
 import strategy.game.common.Coordinate;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
@@ -26,42 +24,10 @@ import strategy.game.version.StrategyGameControllerImpl;
  * @version September 24, 2013
  */
 public class GammaStrategyGameController extends StrategyGameControllerImpl {
-
-	private boolean gameStarted;
-	private boolean gameOver;
-	private PlayerColor lastPlayerColor;
-	Collection<PieceLocationDescriptor> redSetup, blueSetup;
-	private Map<Location, Piece> board;
-	private PieceLocationDescriptor lastRedPieceLocation, lastBluePieceLocation;
-	private boolean redRepetitionFlag, blueRepetitionFlag;
-	private int numRedMovablePieces, numBlueMovablePieces;
-	
-	private static final int NUM_PIECES = 12;
-	private static final Piece CHOKE_POINT = new Piece(PieceType.CHOKE_POINT, null);
-	private static final Location[] CHOKE_POINT_LOCATIONS = 
-		{ new Location2D(2,2), new Location2D(2,3), new Location2D(3,2), new Location2D(3,3) };
-	// based on simple formula for translating locations( (0,0) = 1, (1,1) = 2 ...  (4,5) = 35,  (5,5) = 36)
-	// when pieces are located at their correct locations, their location total should equal these numbers
-	// this can be guaranteed because each collection has exactly 12 pieces (check made before function gets called)
-	private static final int RED_SPACE_TOTAL = 78;
-	private static final int BLUE_SPACE_TOTAL = 366;
 	
 	public GammaStrategyGameController(Collection<PieceLocationDescriptor> redPieces, 
 			Collection<PieceLocationDescriptor> bluePieces) throws StrategyException {
 		super(redPieces, bluePieces);
-	}
-
-	/*
-	 * @see strategy.game.StrategyGameController#startGame()
-	 */
-	@Override
-	public void startGame() throws StrategyException {
-		if(gameStarted) {
-			throw new StrategyException("Game Already In Progress, Make a New Game");
-		}
-		gameStarted = true;
-		gameOver = false;
-		lastPlayerColor = null;
 	}
 
 	/*
@@ -117,6 +83,9 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 			board.put(to, fromPiece);
 			result = new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
 		}
+		else if (toPiece.getType() == PieceType.CHOKE_POINT) {
+			throw new StrategyException("Cannot Move to a Choke Point");
+		}
 		else {
 			result = battle(new PieceLocationDescriptor(fromPiece, from),
 					new PieceLocationDescriptor(toPiece, to));
@@ -140,24 +109,6 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		}
 		
 		return result;
-	}
-	
-
-	/**
-	 * Determines if moving to the given to location is valid from the given from location
-	 * @param from base location
-	 * @param to location to go
-	 * @throws StrategyException
-	 */
-	private void checkLocations(Location from, Location to) throws StrategyException {
-		try {
-			if (from.distanceTo(to) > 1) {
-				throw new StrategyException("Locations are too far apart");
-			}
-		}
-		catch (StrategyRuntimeException e) {
-			throw new StrategyException(e.getMessage());
-		}
 	}
 	
 	/**
@@ -246,11 +197,6 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		
 		final int pieceComparison = fromPiece.getType().compareTo(toPiece.getType());
 		
-		// cannot move to a choke point
-		if (toPiece.getType() == PieceType.CHOKE_POINT) {
-			throw new StrategyException("Cannot Move to a Choke Point");
-		}
-		
 		if (pieceComparison == 0) {
 			board.put(fromLoc, null);
 			board.put(toLoc, null);
@@ -293,15 +239,6 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 			}
 			return new MoveResult(MoveResultStatus.OK, newTo);
 		}
-	}
-
-	
-	/*
-	 * @see strategy.game.StrategyGameController#getPieceAt()
-	 */
-	@Override
-	public Piece getPieceAt(Location location) {
-		return board.get(location);
 	}
 	
 	/**
@@ -416,34 +353,27 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		blueRepetitionFlag = false;
 		numRedMovablePieces = 11;
 		numBlueMovablePieces = 11;
+		
+		final Location[] chokeLocs = { new Location2D(2,2), new Location2D(2,3), new Location2D(3,2), new Location2D(3,3) };
+		
+		NUM_PIECES = 12;
+		CHOKE_POINT_LOCATIONS = chokeLocs;
+		BOARD_WIDTH = 6;
+		BOARD_HEIGHT = 6;
+		// based on simple formula for translating locations( (0,0) = 1, (1,1) = 2 ...  (4,5) = 35,  (5,5) = 36)
+		// when pieces are located at their correct locations, their location total should equal these numbers
+		RED_SPACE_TOTAL = 78;
+		BLUE_SPACE_TOTAL = 366;
 	}
 	
 	/**
-	 * 
+	 * Initializes the board to contain all the spaces of the board
+	 * Adds the validated red and blue pieces to the board
+	 * Additionally, adds choke points to the board
 	 */
-	protected void initializeBoard() 
-	{
-		final Iterator<PieceLocationDescriptor> redIter, blueIter;
-		redIter = redSetup.iterator();
-		blueIter = blueSetup.iterator();
-		
-		// add all spaces to board
-		for (int i = 0; i < 6; i++) {
-			for (int j = 0; j < 6; j++) {
-				board.put(new Location2D(j, i), null);
-			}
-		}
-				
-		PieceLocationDescriptor singleRedPiece, singleBluePiece;
-		
-		while (redIter.hasNext()) {
-			singleRedPiece = redIter.next();
-			singleBluePiece = blueIter.next();
-					
-			// fill board with pieces
-			board.put(singleRedPiece.getLocation(), singleRedPiece.getPiece());
-			board.put(singleBluePiece.getLocation(), singleBluePiece.getPiece());
-		}
+	@Override
+	protected void initializeBoard() {
+		super.initializeBoard();
 		
 		// set choke pieces
 		for (int i = 0; i < CHOKE_POINT_LOCATIONS.length; i++) {

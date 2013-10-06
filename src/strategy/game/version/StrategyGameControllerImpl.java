@@ -11,6 +11,7 @@ import strategy.common.PlayerColor;
 import strategy.common.StrategyException;
 import strategy.common.StrategyRuntimeException;
 import strategy.game.StrategyGameController;
+import strategy.game.common.Coordinate;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
 import strategy.game.common.MoveResult;
@@ -249,8 +250,56 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		try {
 			int moveDist = from.distanceTo(to);
 			
-			if (moveDist > 1 && board.get(to) != null) {
-				throw new StrategyException("Cannot attack when moving scout more than 1 space");
+			if (moveDist > 1) {
+				if (board.get(to) != null) {
+					throw new StrategyException("Cannot attack when moving scout more than 1 space");
+				}
+				// scout moving vertically multiple spaces
+				else if (from.getCoordinate(Coordinate.X_COORDINATE) - to.getCoordinate(Coordinate.X_COORDINATE) == 0) {
+					int fromY = from.getCoordinate(Coordinate.Y_COORDINATE);
+					int toY = to.getCoordinate(Coordinate.Y_COORDINATE);
+					int staticX = from.getCoordinate(Coordinate.X_COORDINATE);
+					
+					// scout moving up the board
+					if (toY > fromY) {
+						for (int y = fromY+1; y < toY; y++) {
+							if (board.get(new Location2D(staticX, y)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+					// scout moving down the board
+					else {
+						for (int y = toY + 1; y > fromY; y--) {
+							if (board.get(new Location2D(staticX, y)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+				}
+				// scout moving horizontally multiple spaces
+				else {
+					int fromX = from.getCoordinate(Coordinate.X_COORDINATE);
+					int toX = to.getCoordinate(Coordinate.X_COORDINATE);
+					int staticY = from.getCoordinate(Coordinate.Y_COORDINATE);
+					
+					// scout moving left
+					if (toX > fromX) {
+						for (int x = fromX + 1; x < toX; x++) {
+							if (board.get(new Location2D(x, staticY)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+					//scout moving right
+					else {
+						for (int x = toX + 1; x > fromX; x--) {
+							if (board.get(new Location2D(x, staticY)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+				}
 			}
 		}
 		catch (StrategyRuntimeException e) {

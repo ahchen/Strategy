@@ -128,7 +128,13 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		fromPiece = getPieceAt(from);
 		toPiece = getPieceAt(to);
 		
-		checkLocations(from, to);
+		if (fromPiece.getType() == PieceType.SCOUT) {
+			checkScoutLocation(from,to);
+		}
+		else {
+			checkLocations(from, to);
+		}
+		
 		result = checkRepetition(piece, from, to);
 		
 		// if check repetition returned a MoveResult, then repetition rule is violated and 
@@ -163,7 +169,14 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		return result;
 	}
 	
-	private void checkValidMoveRequest(PieceType piece, Location from,
+	/**
+	 * TODO
+	 * @param piece
+	 * @param from
+	 * @param to
+	 * @throws StrategyException
+	 */
+	protected void checkValidMoveRequest(PieceType piece, Location from,
 			Location to) throws StrategyException {
 		if (gameOver) {
 			throw new StrategyException("The game is over, you cannot make a move");
@@ -173,6 +186,9 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		}
 		if (piece == PieceType.FLAG) {
 			throw new StrategyException("You cannot move the flag");
+		}
+		if (piece == PieceType.BOMB) {
+			throw new StrategyException("You cannot move the bomb");
 		}
 		if (piece == PieceType.CHOKE_POINT) {
 			throw new StrategyException("You cannot move the choke point");
@@ -221,6 +237,29 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 	}
 	
 	/**
+	 * TODO
+	 * @param piece
+	 * @param from
+	 * @param to
+	 * @return
+	 * @throws StrategyException
+	 */
+	private void checkScoutLocation(Location from, Location to) throws StrategyException {
+		
+		try {
+			int moveDist = from.distanceTo(to);
+			
+			if (moveDist > 1 && board.get(to) != null) {
+				throw new StrategyException("Cannot attack when moving scout more than 1 space");
+			}
+		}
+		catch (StrategyRuntimeException e) {
+			throw new StrategyException(e.getMessage());
+		}
+	}
+
+	
+	/**
 	 * Handles battling and updates the board accordingly
 	 * @param from piece being moved
 	 * @param to piece being attacked
@@ -240,6 +279,7 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		
 		final int pieceComparison = fromPiece.getType().compareTo(toPiece.getType());
 		
+		// draw
 		if (pieceComparison == 0) {
 			board.put(fromLoc, null);
 			board.put(toLoc, null);
@@ -259,8 +299,38 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 			return new MoveResult(MoveResultStatus.RED_WINS, newFrom);
 		}
 		
-		// from Wins
-		if (pieceComparison < 0) {
+		
+		// if attacking BOMB and attacker is not a miner
+		if (toPiece.getType() == PieceType.BOMB && fromPiece.getType() != PieceType.MINER) {
+			// piece gets destroyed
+			board.put(fromLoc, null);
+			
+			if (fromColor == PlayerColor.BLUE) {
+				numBlueMovablePieces--;
+			}
+			else {
+				numRedMovablePieces--;
+			}
+			
+			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(toPiece, toLoc));
+		}
+		// special case of spy attacking marshal
+		else if (fromPiece.getType() == PieceType.SPY && toPiece.getType() == PieceType.MARSHAL) {
+			// spy wins
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+			
+			if (fromColor == PlayerColor.BLUE) {
+				numRedMovablePieces--;
+			}
+			else {
+				numBlueMovablePieces--;
+			}
+			
+			return new MoveResult(MoveResultStatus.OK, newFrom);
+		}
+		// from Wins (general case)
+		else if (pieceComparison < 0) {
 			board.put(fromLoc, null);
 			board.put(toLoc, fromPiece);
 			if (fromColor == PlayerColor.BLUE) {
@@ -271,7 +341,8 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 			}
 			return new MoveResult(MoveResultStatus.OK, newFrom);
 		}
-		else { // to Wins
+		// to Wins (general case)
+		else { 
 			board.put(toLoc, null);
 			board.put(fromLoc, toPiece);
 			if (fromColor == PlayerColor.BLUE) {

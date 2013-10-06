@@ -87,8 +87,8 @@ public class GammaStrategyTest {
 		redCollection = new ArrayList<PieceLocationDescriptor>();
 		blueCollection = new ArrayList<PieceLocationDescriptor>();
 		
-		int j = 35;
-		for (int i=0; i < 12; i++) {
+		int j = everySpace.length - 1;
+		for (int i=0; i < playerPieces.length; i++) {
 			// fill array with pieces
 			redPieces[i] = new Piece(playerPieces[i], PlayerColor.RED);
 			bluePieces[i] = new Piece(playerPieces[i], PlayerColor.BLUE);	
@@ -125,7 +125,7 @@ public class GammaStrategyTest {
 		blueOnePiece.add(new PieceLocationDescriptor(bluePieces[0], everySpace[35]));
 		
 		game = gameFactory.makeGammaStrategyGame(redOnePiece, blueOnePiece);
-	}
+	} 
 	
 	@Test(expected=StrategyException.class)
 	public void InvalidPieceCombinationTest() throws StrategyException {
@@ -141,7 +141,7 @@ public class GammaStrategyTest {
 		invalidBlue.add(new PieceLocationDescriptor(bluePieces[2], everySpace[35]));
 		
 		game = gameFactory.makeGammaStrategyGame(invalidRed, invalidBlue);
-	}
+	} 
 	
 	@Test(expected=StrategyException.class)
 	public void InvalidGammaPieceTest() throws StrategyException {
@@ -372,7 +372,7 @@ public class GammaStrategyTest {
 		// red captures flag in this move, game over
 		game.move(PieceType.SERGEANT, new Location2D(5,3), new Location2D(5,4));
 		
-		// move after game without restarting invalid
+		// move after gameinvalid
 		game.move(PieceType.SERGEANT, new Location2D(0,2), new Location2D(0,3));
 	}
 	
@@ -391,7 +391,7 @@ public class GammaStrategyTest {
 	
 		// start game after a finish
 		game.startGame();
-		// make sure moves work
+		// make sure moves don't work
 		assertNotNull(game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2)));
 	}
 	
@@ -557,6 +557,8 @@ public class GammaStrategyTest {
 		
 		game.startGame();
 		
+		MoveResult res;
+		
 		game.move(PieceType.MARSHAL, new Location2D(1,1), new Location2D(1,2));
 		game.move(PieceType.LIEUTENANT, new Location2D(1,4), new Location2D(1,3));
 		// marshal moves to 1,3 and overtakes lieutenant position
@@ -565,7 +567,9 @@ public class GammaStrategyTest {
 		game.move(PieceType.MARSHAL, new Location2D(1,3), new Location2D(1,2));
 		game.move(PieceType.SERGEANT, new Location2D(0,3), new Location2D(0,2));
 		// should violate rule
-		game.move(PieceType.MARSHAL, new Location2D(1,2), new Location2D(1,3));
+		res = game.move(PieceType.MARSHAL, new Location2D(1,2), new Location2D(1,3));
+		
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
 	}
 	
 	@Test
@@ -628,7 +632,7 @@ public class GammaStrategyTest {
 	
 	@Test
 	public void noPiecesLeft() throws StrategyException {
-game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
+		game = gameFactory.makeGammaStrategyGame(redCollection, blueCollection);
 		
 		game.startGame();
 		

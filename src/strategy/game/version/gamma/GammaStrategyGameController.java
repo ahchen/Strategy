@@ -106,7 +106,7 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 					throw new StrategyException("Invalid Piece");
 			}
 		}
-		
+
 		// if any of the counts are not 0, there was an invalid combination of pieces
 		if (numFlags != 0 || numMarshal != 0 || numColonel != 0 || numCaptain != 0 
 				|| numLieutenant != 0 || numSergeant != 0) 

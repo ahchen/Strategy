@@ -16,6 +16,7 @@ import strategy.common.*;
 import strategy.game.common.*;
 import strategy.game.version.alpha.AlphaStrategyGameController;
 import strategy.game.version.beta.BetaStrategyGameControlller;
+import strategy.game.version.delta.DeltaStrategyGameController;
 import strategy.game.version.gamma.GammaStrategyGameController;
 
 /**
@@ -87,5 +88,20 @@ public class StrategyGameFactory
 		throws StrategyException
 	{
 		return new GammaStrategyGameController(redConfiguration, blueConfiguration);
+	}
+	
+	/**
+	 * Create a new Delta Strategy game given the 
+	 * @param redConfiguration the initial starting configuration for the RED pieces
+	 * @param blueConfiguration the initial starting configuration for the BLUE pieces
+	 * @return the Delta Strategy game instance with the initial configuration of pieces
+	 * @throws StrategyException if either configuration is incorrect
+	 */
+	public StrategyGameController makeDeltaStrategyGame(
+			Collection<PieceLocationDescriptor> redConfiguration,
+			Collection<PieceLocationDescriptor> blueConfiguration)
+		throws StrategyException
+	{
+		return new DeltaStrategyGameController(redConfiguration, blueConfiguration);
 	}
 }

@@ -259,10 +259,10 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 					int fromY = from.getCoordinate(Coordinate.Y_COORDINATE);
 					int toY = to.getCoordinate(Coordinate.Y_COORDINATE);
 					int staticX = from.getCoordinate(Coordinate.X_COORDINATE);
-					
+
 					// scout moving up the board
 					if (toY > fromY) {
-						for (int y = fromY+1; y < toY; y++) {
+						for (int y = fromY + 1; y < toY; y++) {
 							if (board.get(new Location2D(staticX, y)) != null) {
 								throw new StrategyException("Not all spaces clear between movement locations for Scout");
 							}
@@ -270,7 +270,7 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 					}
 					// scout moving down the board
 					else {
-						for (int y = toY + 1; y > fromY; y--) {
+						for (int y = fromY - 1; y > toY; y--) {
 							if (board.get(new Location2D(staticX, y)) != null) {
 								throw new StrategyException("Not all spaces clear between movement locations for Scout");
 							}
@@ -293,7 +293,7 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 					}
 					//scout moving right
 					else {
-						for (int x = toX + 1; x > fromX; x--) {
+						for (int x = fromX - 1; x > toX; x--) {
 							if (board.get(new Location2D(x, staticY)) != null) {
 								throw new StrategyException("Not all spaces clear between movement locations for Scout");
 							}

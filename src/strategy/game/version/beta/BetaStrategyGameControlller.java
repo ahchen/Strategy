@@ -155,7 +155,8 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 			board.put(from, null);
 			board.put(to, fromPiece);
 			
-			result = new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, to));
+			result = new MoveResult(MoveResultStatus.OK, 
+					new PieceLocationDescriptor(fromPiece, to));
 		}
 		else {
 			// space is not empty, there is a battle
@@ -324,7 +325,8 @@ public class BetaStrategyGameControlller implements StrategyGameController {
 	 * @param playerPieces the collection of pieces to be verified
 	 * @throws StrategyException
 	 */
-	private void validatePiecesAndLocations(Collection<PieceLocationDescriptor> playerPieces) throws StrategyException 
+	private void validatePiecesAndLocations(Collection<PieceLocationDescriptor> playerPieces) 
+			throws StrategyException 
 	{
 		// number of types of pieces each player is allowed to have
 		int numFlags = 1;

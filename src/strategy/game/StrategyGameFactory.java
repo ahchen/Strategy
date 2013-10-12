@@ -14,9 +14,11 @@ import java.util.Collection;
 
 import strategy.common.*;
 import strategy.game.common.*;
+import strategy.game.reporter.StrategyGameObserver;
 import strategy.game.version.alpha.AlphaStrategyGameController;
 import strategy.game.version.beta.BetaStrategyGameControlller;
 import strategy.game.version.delta.DeltaStrategyGameController;
+import strategy.game.version.epsilon.EpsilonStrategyGameController;
 import strategy.game.version.gamma.GammaStrategyGameController;
 
 /**
@@ -104,4 +106,20 @@ public class StrategyGameFactory
 	{
 		return new DeltaStrategyGameController(redConfiguration, blueConfiguration);
 	}
+	
+	/**
+	 * 
+	 * @param redConfiguration
+	 * @param blueConfiguration
+	 * @return
+	 * @throws StrategyException 
+	 */
+	public StrategyGameController makeEpsilonStrategyGame( 
+			Collection<PieceLocationDescriptor> redConfiguration, 
+			Collection<PieceLocationDescriptor> blueConfiguration, 
+			Collection<StrategyGameObserver>observers) throws StrategyException {
+		return new EpsilonStrategyGameController(blueConfiguration, blueConfiguration);
+	} 
+	
+
 }

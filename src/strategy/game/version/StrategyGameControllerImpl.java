@@ -66,10 +66,12 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 	 * @param redPieces collection of red pieces
 	 * @param bluePieces collection of blue pieces
 	 */
-	protected abstract void setVariables(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces);
+	protected abstract void setVariables(Collection<PieceLocationDescriptor> redPieces, 
+			Collection<PieceLocationDescriptor> bluePieces);
 	
 	/**
-	 * Validates that the collection given only contains valid piece/location combinations for type of game created
+	 * Validates that the collection given only contains 
+	 * piece/location combinations that are ok for type of game created
 	 * @param pieces the collection of pieces to validate
 	 * @throws StrategyException thrown if the collection is deemed invalid
 	 */
@@ -129,12 +131,7 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		fromPiece = getPieceAt(from);
 		toPiece = getPieceAt(to);
 		
-		if (fromPiece.getType() == PieceType.SCOUT) {
-			checkScoutLocation(from,to);
-		}
-		else {
-			checkLocations(from, to);
-		}
+		checkLocations(from, to);
 		
 		result = checkRepetition(piece, from, to);
 		
@@ -171,13 +168,13 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 	}
 	
 	/**
-	 * TODO
-	 * @param piece
-	 * @param from
-	 * @param to
-	 * @throws StrategyException
+	 * Checks if the given move request is a valid one
+	 * @param piece piece to be moved
+	 * @param from location of the piece to be moved
+	 * @param to location to move the given piece to 
+	 * @throws StrategyException if the move is deemed to be invalid
 	 */
-	protected void checkValidMoveRequest(PieceType piece, Location from,
+	private void checkValidMoveRequest(PieceType piece, Location from,
 			Location to) throws StrategyException {
 		if (gameOver) {
 			throw new StrategyException("The game is over, you cannot make a move");
@@ -226,7 +223,7 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 	 * @param to location to go
 	 * @throws StrategyException
 	 */
-	private void checkLocations(Location from, Location to) throws StrategyException {
+	protected void checkLocations(Location from, Location to) throws StrategyException {
 		try {
 			if (from.distanceTo(to) > 1) {
 				throw new StrategyException("Locations are too far apart");
@@ -238,83 +235,12 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 	}
 	
 	/**
-	 * TODO
-	 * @param piece
-	 * @param from
-	 * @param to
-	 * @return
-	 * @throws StrategyException
-	 */
-	private void checkScoutLocation(Location from, Location to) throws StrategyException {
-		
-		try {
-			int moveDist = from.distanceTo(to);
-			
-			if (moveDist > 1) {
-				if (board.get(to) != null) {
-					throw new StrategyException("Cannot attack when moving scout more than 1 space");
-				}
-				// scout moving vertically multiple spaces
-				else if (from.getCoordinate(Coordinate.X_COORDINATE) - to.getCoordinate(Coordinate.X_COORDINATE) == 0) {
-					int fromY = from.getCoordinate(Coordinate.Y_COORDINATE);
-					int toY = to.getCoordinate(Coordinate.Y_COORDINATE);
-					int staticX = from.getCoordinate(Coordinate.X_COORDINATE);
-
-					// scout moving up the board
-					if (toY > fromY) {
-						for (int y = fromY + 1; y < toY; y++) {
-							if (board.get(new Location2D(staticX, y)) != null) {
-								throw new StrategyException("Not all spaces clear between movement locations for Scout");
-							}
-						}
-					}
-					// scout moving down the board
-					else {
-						for (int y = fromY - 1; y > toY; y--) {
-							if (board.get(new Location2D(staticX, y)) != null) {
-								throw new StrategyException("Not all spaces clear between movement locations for Scout");
-							}
-						}
-					}
-				}
-				// scout moving horizontally multiple spaces
-				else {
-					int fromX = from.getCoordinate(Coordinate.X_COORDINATE);
-					int toX = to.getCoordinate(Coordinate.X_COORDINATE);
-					int staticY = from.getCoordinate(Coordinate.Y_COORDINATE);
-					
-					// scout moving left
-					if (toX > fromX) {
-						for (int x = fromX + 1; x < toX; x++) {
-							if (board.get(new Location2D(x, staticY)) != null) {
-								throw new StrategyException("Not all spaces clear between movement locations for Scout");
-							}
-						}
-					}
-					//scout moving right
-					else {
-						for (int x = fromX - 1; x > toX; x--) {
-							if (board.get(new Location2D(x, staticY)) != null) {
-								throw new StrategyException("Not all spaces clear between movement locations for Scout");
-							}
-						}
-					}
-				}
-			}
-		}
-		catch (StrategyRuntimeException e) {
-			throw new StrategyException(e.getMessage());
-		}
-	}
-
-	
-	/**
 	 * Handles battling and updates the board accordingly
 	 * @param from piece being moved
 	 * @param to piece being attacked
 	 * @return move result after the battle
 	 */
-	private MoveResult battle(PieceLocationDescriptor from,PieceLocationDescriptor to) {
+	protected MoveResult battle(PieceLocationDescriptor from,PieceLocationDescriptor to) {
 		final Piece fromPiece = from.getPiece();
 		final Piece toPiece = to.getPiece();
 		
@@ -325,6 +251,8 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 		final PieceLocationDescriptor newTo = new PieceLocationDescriptor(toPiece, fromLoc);
 		
 		final PlayerColor fromColor = fromPiece.getOwner();
+		final PlayerColor toColor = toPiece.getOwner();
+		final PlayerColor winningColor; 
 		
 		final int pieceComparison = fromPiece.getType().compareTo(toPiece.getType());
 		
@@ -348,60 +276,34 @@ public abstract class StrategyGameControllerImpl implements StrategyGameControll
 			return new MoveResult(MoveResultStatus.RED_WINS, newFrom);
 		}
 		
+		MoveResult battleMoveRes;
 		
-		// if attacking BOMB and attacker is not a miner
-		if (toPiece.getType() == PieceType.BOMB && fromPiece.getType() != PieceType.MINER) {
-			// piece gets destroyed
-			board.put(fromLoc, null);
-			
-			if (fromColor == PlayerColor.BLUE) {
-				numBlueMovablePieces--;
-			}
-			else {
-				numRedMovablePieces--;
-			}
-			
-			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(toPiece, toLoc));
-		}
-		// special case of spy attacking marshal
-		else if (fromPiece.getType() == PieceType.SPY && toPiece.getType() == PieceType.MARSHAL) {
-			// spy wins
-			board.put(fromLoc, null);
-			board.put(toLoc, fromPiece);
-			
-			if (fromColor == PlayerColor.BLUE) {
-				numRedMovablePieces--;
-			}
-			else {
-				numBlueMovablePieces--;
-			}
-			
-			return new MoveResult(MoveResultStatus.OK, newFrom);
-		}
 		// from Wins (general case)
-		else if (pieceComparison < 0) {
+		if (pieceComparison < 0) {
 			board.put(fromLoc, null);
 			board.put(toLoc, fromPiece);
-			if (fromColor == PlayerColor.BLUE) {
-				numRedMovablePieces--;
-			}
-			else {
-				numBlueMovablePieces--;
-			}
-			return new MoveResult(MoveResultStatus.OK, newFrom);
+			winningColor = fromColor;
+			
+			battleMoveRes =  new MoveResult(MoveResultStatus.OK, newFrom);
 		}
 		// to Wins (general case)
 		else { 
 			board.put(toLoc, null);
 			board.put(fromLoc, toPiece);
-			if (fromColor == PlayerColor.BLUE) {
-				numBlueMovablePieces--;
-			}
-			else {
-				numRedMovablePieces--;
-			}
-			return new MoveResult(MoveResultStatus.OK, newTo);
+			winningColor = toColor;
+			
+			battleMoveRes =  new MoveResult(MoveResultStatus.OK, newTo);
 		}
+		
+		// Adjust the number of movable pieces
+		if (winningColor == PlayerColor.BLUE) {
+			numRedMovablePieces--;
+		}
+		else {
+			numBlueMovablePieces --;
+		}
+		
+		return battleMoveRes;
 	}
 	
 	/**

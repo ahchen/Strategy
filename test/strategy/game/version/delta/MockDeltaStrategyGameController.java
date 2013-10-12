@@ -14,7 +14,7 @@ import strategy.game.common.PieceLocationDescriptor;
 
 /**
  * @author Alex C
- *
+ * @version October 8, 2013
  */
 public class MockDeltaStrategyGameController extends DeltaStrategyGameController {
 
@@ -36,7 +36,7 @@ public class MockDeltaStrategyGameController extends DeltaStrategyGameController
 		super(redPieces, bluePieces);
 		
 		this.board = board;
-		this.numRedMovablePieces = numRedMoveable;
-		this.numBlueMovablePieces = numBlueMovable;
+		numRedMovablePieces = numRedMoveable;
+		numBlueMovablePieces = numBlueMovable;
 	}
 }

@@ -32,7 +32,8 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	 * @param playerPieces the collection of pieces to be verified
 	 * @throws StrategyException
 	 */
-	protected void validatePiecesAndLocations(Collection<PieceLocationDescriptor> playerPieces) throws StrategyException 
+	protected void validatePiecesAndLocations(Collection<PieceLocationDescriptor> playerPieces) 
+			throws StrategyException 
 	{
 		if (playerPieces == null) {
 			throw new StrategyException("Given Null Configurations");
@@ -124,7 +125,8 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 	/**
 	 * 
 	 */
-	protected void setVariables(Collection<PieceLocationDescriptor> redPieces, Collection<PieceLocationDescriptor> bluePieces) 
+	protected void setVariables(Collection<PieceLocationDescriptor> redPieces, 
+			Collection<PieceLocationDescriptor> bluePieces) 
 	{
 		gameStarted = false;
 		gameOver = false;
@@ -139,7 +141,11 @@ public class GammaStrategyGameController extends StrategyGameControllerImpl {
 		numRedMovablePieces = 11;
 		numBlueMovablePieces = 11;
 		
-		final Location[] chokeLocs = { new Location2D(2,2), new Location2D(2,3), new Location2D(3,2), new Location2D(3,3) };
+		final Location[] chokeLocs = { 
+				new Location2D(2,2),
+				new Location2D(2,3), 
+				new Location2D(3,2), 
+				new Location2D(3,3) };
 		
 		NUM_PIECES = 12;
 		CHOKE_POINT_LOCATIONS = chokeLocs;

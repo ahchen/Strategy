@@ -23,6 +23,7 @@ public enum PieceType
 	COLONEL("Colonel", "col"),
 	MAJOR("Major", "maj"),
 	CAPTAIN("Captain", "cpt"),
+	FIRST_LIEUTENANT("First Lieutenant", "1LT"),
 	LIEUTENANT("Lieutenant", "lt"),
 	SERGEANT("Sergeant", "sgt"),
 	MINER("Miner", "mnr"),

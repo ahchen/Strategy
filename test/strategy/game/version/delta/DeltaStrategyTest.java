@@ -28,7 +28,7 @@ import strategy.game.common.PieceType;
 
 /**
  * @author Alex C
- *
+ * @version October 8, 2013
  */
 public class DeltaStrategyTest {
 
@@ -37,9 +37,9 @@ public class DeltaStrategyTest {
 	private Collection<PieceLocationDescriptor> redCollection;
 	private Collection<PieceLocationDescriptor> blueCollection;
 	
-	private static Location[] everySpace = new Location2D[100];  
+	private static final Location[] everySpace = new Location2D[100];  
 	// define pieces in certain configuration
-	private static PieceType[] playerPieces = 
+	private static final PieceType[] playerPieces = 
 	{
 		PieceType.COLONEL,
 		PieceType.MAJOR, PieceType.MAJOR, 
@@ -91,8 +91,8 @@ public class DeltaStrategyTest {
 	 *   |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  
 	 */
 	
-	private static Piece[] bluePieces = new Piece[40]; 
-	private static Piece[] redPieces = new Piece[40];
+	private static final Piece[] bluePieces = new Piece[40]; 
+	private static final Piece[] redPieces = new Piece[40];
 	
 	@BeforeClass
 	public static void BetaTestSetup() {
@@ -119,15 +119,14 @@ public class DeltaStrategyTest {
 		for (int i=0; i < playerPieces.length; i++) {
 			// fill array with pieces
 			redPieces[i] = new Piece(playerPieces[i], PlayerColor.RED);
-			bluePieces[i] = new Piece(playerPieces[i], PlayerColor.BLUE);	
-			
+			bluePieces[i] = new Piece(playerPieces[i], PlayerColor.BLUE);
+
 			// add pieces to collection
 			redCollection.add(new PieceLocationDescriptor(redPieces[i], everySpace[i]));
 			blueCollection.add(new PieceLocationDescriptor(bluePieces[i], everySpace[j]));
 			
 			j--;
-		}	
-
+		}
 	}
 
 	@Test
@@ -143,7 +142,7 @@ public class DeltaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void NotEnoughPiecesTest() throws StrategyException {
-		Collection<PieceLocationDescriptor> redOnePiece, blueOnePiece;
+		final Collection<PieceLocationDescriptor> redOnePiece, blueOnePiece;
 		
 		// create new collection
 		redOnePiece = new ArrayList<PieceLocationDescriptor>();
@@ -158,8 +157,8 @@ public class DeltaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void InvalidPieceCombinationTest() throws StrategyException {
-		Collection<PieceLocationDescriptor> invalidRed = redCollection;
-		Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
+		final Collection<PieceLocationDescriptor> invalidRed = redCollection;
+		final Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
 		
 		// remove a red and blue piece
 		invalidRed.remove(new PieceLocationDescriptor(redPieces[0], everySpace[0]));
@@ -174,8 +173,8 @@ public class DeltaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void InvalidPieceLayoutTest() throws StrategyException {
-		Collection<PieceLocationDescriptor> invalidRed = redCollection;
-		Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
+		final Collection<PieceLocationDescriptor> invalidRed = redCollection;
+		final Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
 		
 		invalidRed.remove(new PieceLocationDescriptor(redPieces[0], everySpace[0]));
 		invalidBlue.remove(new PieceLocationDescriptor(bluePieces[0], everySpace[35]));
@@ -321,7 +320,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		res = game.move(PieceType.SCOUT, everySpace[34], everySpace[54]);
 		
@@ -344,7 +343,7 @@ public class DeltaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void moveScoutTestBlockedUp() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 	
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -365,10 +364,10 @@ public class DeltaStrategyTest {
 		// cannot move multiple spaces if there is a piece in the way
 		game.move(PieceType.SCOUT, everySpace[0], everySpace[50]);
 	}	
-	
+
 	@Test(expected=StrategyException.class)
 	public void moveScoutTestBlockedDown() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -393,7 +392,7 @@ public class DeltaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void moveScoutTestBlockedRight() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -417,7 +416,7 @@ public class DeltaStrategyTest {
 	
 	@Test(expected=StrategyException.class)
 	public void moveScoutTestBlockedLeft() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -442,7 +441,7 @@ public class DeltaStrategyTest {
 	
 	@Test
 	public void moveScoutTestValidRight() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -467,7 +466,7 @@ public class DeltaStrategyTest {
 	
 	@Test
 	public void moveScoutTestValidLeft() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -509,7 +508,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.MINER, everySpace[30], everySpace[40]);
 		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
@@ -531,7 +530,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
 		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
@@ -555,7 +554,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
 		game.move(PieceType.SPY, everySpace[68], everySpace[58]);
@@ -580,7 +579,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
 		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
@@ -598,7 +597,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
 		game.move(PieceType.SPY, everySpace[68], everySpace[58]);
@@ -618,7 +617,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
 		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
@@ -637,7 +636,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.MINER, everySpace[30], everySpace[40]);
 		game.move(PieceType.MINER, everySpace[69], everySpace[59]);
@@ -658,7 +657,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.MINER, everySpace[30], everySpace[40]);
 		game.move(PieceType.MINER, everySpace[69], everySpace[59]);
@@ -723,7 +722,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 
-		MoveResult res;
+		final MoveResult res;
 
 		game.move(PieceType.SCOUT, everySpace[34], everySpace[54]);
 		game.move(PieceType.SCOUT, everySpace[65], everySpace[55]);
@@ -745,7 +744,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 
-		MoveResult res;
+		final MoveResult res;
 
 		game.move(PieceType.SCOUT, everySpace[34], everySpace[54]);
 		game.move(PieceType.SCOUT, everySpace[65], everySpace[55]);
@@ -766,7 +765,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 
-		MoveResult res;
+		final MoveResult res;
 
 		game.move(PieceType.SCOUT, everySpace[34], everySpace[54]);
 		game.move(PieceType.SCOUT, everySpace[65], everySpace[45]);
@@ -788,7 +787,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.MAJOR, everySpace[35], everySpace[45]);
 		game.move(PieceType.MAJOR, everySpace[64], everySpace[54]);
@@ -806,7 +805,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.MAJOR, everySpace[35], everySpace[45]);
 		game.move(PieceType.MAJOR, everySpace[64], everySpace[54]);
@@ -824,7 +823,7 @@ public class DeltaStrategyTest {
 		
 		game.startGame();
 		
-		MoveResult res;
+		final MoveResult res;
 		
 		game.move(PieceType.SCOUT, everySpace[34], everySpace[54]);
 		game.move(PieceType.SCOUT, everySpace[65], everySpace[55]);
@@ -839,7 +838,7 @@ public class DeltaStrategyTest {
 	
 	@Test
 	public void testDrawNoPiecesLeft() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -855,14 +854,14 @@ public class DeltaStrategyTest {
 		game.startGame();
 		
 		// have the 2 pieces kill each other
-		MoveResult res = game.move(PieceType.SCOUT, everySpace[44], everySpace[45]);
+		final MoveResult res = game.move(PieceType.SCOUT, everySpace[44], everySpace[45]);
 		
 		assertEquals(res.getStatus(), MoveResultStatus.DRAW);
 	}
 	
 	@Test
 	public void noRedPiecesLeftTest() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -880,14 +879,14 @@ public class DeltaStrategyTest {
 		game.startGame();
 		
 		// have the 2 pieces kill each other
-		MoveResult res = game.move(PieceType.SCOUT, everySpace[44], everySpace[45]);
+		final MoveResult res = game.move(PieceType.SCOUT, everySpace[44], everySpace[45]);
 		
 		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
 	}
 	
 	@Test
 	public void noBluePiecesLeftTest() throws StrategyException {
-		Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
+		final Map<Location, Piece> newBoard = new HashMap<Location, Piece>();
 		
 		for (int i = 0; i < 100; i++) {
 			newBoard.put(everySpace[i], null);
@@ -905,11 +904,10 @@ public class DeltaStrategyTest {
 		game.startGame();
 		
 		// have the 2 pieces kill each other
-		MoveResult res = game.move(PieceType.SCOUT, everySpace[44], everySpace[45]);
+		final MoveResult res = game.move(PieceType.SCOUT, everySpace[44], everySpace[45]);
 		
 		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
 	}
-	
 	
 	
 	

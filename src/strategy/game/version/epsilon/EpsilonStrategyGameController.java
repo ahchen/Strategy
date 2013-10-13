@@ -29,7 +29,8 @@ import strategy.game.version.StrategyGameControllerImpl;
 public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		implements StrategyGameController {
 	
-	private int redFlagsCaptured, blueFlagsCaptured;
+	private boolean redFlagCaptured, blueFlagCaptured;
+	private boolean firstLT2SpaceAttack;
 
 	public EpsilonStrategyGameController(
 			Collection<PieceLocationDescriptor> redPieces,
@@ -57,8 +58,9 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		numRedMovablePieces = 33;
 		numBlueMovablePieces = 33;
 		
-		redFlagsCaptured = 0;
-		blueFlagsCaptured = 0;
+		redFlagCaptured = false;
+		blueFlagCaptured = false;
+		firstLT2SpaceAttack= false;
 		
 		final Location[] chokeLocs = { 
 				new Location2D(2,4), 
@@ -193,7 +195,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		
 		if (piece == null && from == null && to == null) {
 			// blue was last to move so red resigned
-			if (lastPlayerColor == PlayerColor.BLUE) {
+			if (lastPlayerColor == PlayerColor.BLUE || lastPlayerColor == null) {
 				return new MoveResult(MoveResultStatus.BLUE_WINS, null);
 			}
 			else {
@@ -207,16 +209,33 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 	}
 	
 	@Override
-	protected MoveResult battle(PieceLocationDescriptor from,PieceLocationDescriptor to) {
+	protected MoveResult battle(PieceLocationDescriptor from, PieceLocationDescriptor to) {
 		final Piece fromPiece = from.getPiece();
 		final Piece toPiece = to.getPiece();
 		
 		final Location fromLoc = from.getLocation();
 		final Location toLoc = to.getLocation();
 		 
-		
+		// red attacking first blue flag
+		if (toPiece.getType() == PieceType.FLAG && lastPlayerColor == PlayerColor.BLUE && !blueFlagCaptured) {
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+			
+			blueFlagCaptured = true;
+			
+			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, toLoc));			
+		}
+		// blue attacking first red flag
+		else if (toPiece.getType() == PieceType.FLAG && lastPlayerColor == PlayerColor.RED && !redFlagCaptured) {
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+			
+			redFlagCaptured = true;
+			
+			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, toLoc));
+		}
 		// if attacking BOMB and attacker is not a miner
-		if (toPiece.getType() == PieceType.BOMB && fromPiece.getType() != PieceType.MINER) {
+		else if (toPiece.getType() == PieceType.BOMB && fromPiece.getType() != PieceType.MINER) {
 			// piece gets destroyed
 			board.put(fromLoc, null);
 			
@@ -227,7 +246,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 				numRedMovablePieces--;
 			}
 
-			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(toPiece, toLoc));
+			return new MoveResult(MoveResultStatus.OK, to);
 		}
 		// special case of spy attacking marshal
 		else if (fromPiece.getType() == PieceType.SPY && toPiece.getType() == PieceType.MARSHAL) {
@@ -244,16 +263,43 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 
 			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, toLoc));
 		}
+		// special Draw Case
 		else if (fromPiece.getType() == PieceType.FIRST_LIEUTENANT && toPiece.getType() == PieceType.LIEUTENANT ||
 				fromPiece.getType() == PieceType.LIEUTENANT && toPiece.getType() == PieceType.FIRST_LIEUTENANT) {
+			// in case this was a 2 space attack, set the flag back to false
+			firstLT2SpaceAttack = false;
+			
 			// both pieces are destroyed
 			board.put(fromLoc, null);
 			board.put(toLoc, null);
-			
+
 			numRedMovablePieces--;
 			numBlueMovablePieces--;
-			
+
 			return new MoveResult(MoveResultStatus.OK, null);
+		}		
+		// if set true, from piece is 1st LT and is attacking using 2 space rule.
+		else if (firstLT2SpaceAttack) {
+			// set the flag back to false
+			firstLT2SpaceAttack = false;
+			
+			final int pieceComparison = fromPiece.getType().compareTo(toPiece.getType());
+			
+			// 1st LT Wins
+			if (pieceComparison < 0) {
+				board.put(fromLoc, null);
+				board.put(toLoc, fromPiece);
+				
+				return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, toLoc));
+			}
+			// 1st LT Loses
+			else { 
+				// only remove 1st LT, dont move other piece
+				board.put(fromLoc, null);
+				
+				return new MoveResult(MoveResultStatus.OK, to);
+			}
+			
 		}
 		else {
 			 return super.battle(from, to);
@@ -377,6 +423,8 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 						if (getPieceAt(new Location2D(midpointX, midpointY)) != null) {
 							throw new StrategyException("Piece in the way of attack");
 						}
+						
+						firstLT2SpaceAttack = true;
 					}
 				}
 				else {

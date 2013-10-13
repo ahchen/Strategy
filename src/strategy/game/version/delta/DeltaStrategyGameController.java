@@ -229,7 +229,7 @@ public class DeltaStrategyGameController extends StrategyGameControllerImpl
 				numRedMovablePieces--;
 			}
 
-			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(toPiece, toLoc));
+			return new MoveResult(MoveResultStatus.OK, to);
 		}
 		// special case of spy attacking marshal
 		else if (fromPiece.getType() == PieceType.SPY && toPiece.getType() == PieceType.MARSHAL) {

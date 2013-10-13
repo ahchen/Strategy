@@ -1,0 +1,10 @@
+x 1ST LT
+  x Move
+  - Battle
+    x win = move
+    x lost = dont move
+x 2 FLAGS
+  x Substitute any piece
+x Game End BOTH Flags
+x Resign
+- GameReporter

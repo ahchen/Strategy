@@ -340,7 +340,7 @@ public class EpsilonStrategyTest {
 	}
 	
 	@Test
-	public void FirstLTAttack2SpacesTest() throws StrategyException {
+	public void FirstLTAttack2SpacesDrawTest() throws StrategyException {
 		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
 		
 		game.startGame();
@@ -353,4 +353,229 @@ public class EpsilonStrategyTest {
 		assertEquals(res.getStatus(), MoveResultStatus.OK);
 		assertNull(res.getBattleWinner());		
 	}
+	
+	@Test
+	public void FirstLTAttack2SpacesWinTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[54]);
+		game.move(PieceType.LIEUTENANT, everySpace[44], everySpace[45]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[54], everySpace[44]);
+		game.move(PieceType.LIEUTENANT, everySpace[45], everySpace[55]);
+		
+		MoveResult res = game.move(PieceType.FIRST_LIEUTENANT, everySpace[44], everySpace[24]);
+		
+		assertNull(game.getPieceAt(everySpace[44]));
+		assertEquals(game.getPieceAt(everySpace[24]), bluePieces[35]);
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(bluePieces[35], everySpace[24]));		
+	}
+	
+	@Test
+	public void FirstLTAttack2SpacesLoseTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[54]);
+		game.move(PieceType.LIEUTENANT, everySpace[44], everySpace[45]);
+		game.move(PieceType.LIEUTENANT, everySpace[65], everySpace[55]);
+		game.move(PieceType.MAJOR, everySpace[33], everySpace[34]);
+		
+		MoveResult res = game.move(PieceType.FIRST_LIEUTENANT, everySpace[54], everySpace[34]);
+		
+		assertNull(game.getPieceAt(everySpace[54]));
+		assertEquals(game.getPieceAt(everySpace[34]), redPieces[33]);
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(redPieces[33], everySpace[34]));		
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void FirstLTMoveDiagonallyTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[35], everySpace[54]);
+	}
+	
+	
+	@Test(expected=StrategyException.class)
+	public void FirstLTMove3SpacesTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		game.move(PieceType.LIEUTENANT, everySpace[65], everySpace[55]);
+		game.move(PieceType.LIEUTENANT, everySpace[44], everySpace[54]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[34]);
+	}
+
+	@Test(expected=StrategyException.class)
+	public void FirstLTPieceBetweenAttackTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[54]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[35], everySpace[34]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[54], everySpace[34]);
+		
+	}
+	
+	@Test
+	public void minerAttacksBombTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		game.move(PieceType.MINER, everySpace[30], everySpace[40]);
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
+		game.move(PieceType.MINER, everySpace[40], everySpace[50]);
+		game.move(PieceType.MARSHAL, everySpace[51], everySpace[41]);
+		
+		res = game.move(PieceType.MINER, everySpace[50], everySpace[60]);
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.MINER, PlayerColor.RED), everySpace[60]));
+		
+		assertEquals(game.getPieceAt(everySpace[60]), new Piece(PieceType.MINER, PlayerColor.RED));
+		assertNull(game.getPieceAt(everySpace[50]));
+	}
+	
+	@Test
+	public void redNotMinerAttacksBombTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
+		game.move(PieceType.SPY, everySpace[41], everySpace[40]);
+		game.move(PieceType.MARSHAL, everySpace[51], everySpace[41]);
+		game.move(PieceType.SPY, everySpace[40], everySpace[50]);
+		game.move(PieceType.MARSHAL, everySpace[41], everySpace[51]);
+		
+		res = game.move(PieceType.SPY, everySpace[50], everySpace[60]);
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.BOMB, PlayerColor.BLUE), everySpace[60]));
+		
+		assertEquals(game.getPieceAt(everySpace[60]), new Piece(PieceType.BOMB, PlayerColor.BLUE));
+		assertNull(game.getPieceAt(everySpace[50]));
+	}
+	
+	@Test
+	public void blueNotMinerAttacksBombTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
+		game.move(PieceType.SPY, everySpace[68], everySpace[58]);
+		game.move(PieceType.SPY, everySpace[41], everySpace[40]);
+		game.move(PieceType.SPY, everySpace[58], everySpace[48]);
+		game.move(PieceType.SPY, everySpace[40], everySpace[50]);
+		game.move(PieceType.SPY, everySpace[48], everySpace[49]);
+		game.move(PieceType.SPY, everySpace[50], everySpace[40]);
+		
+		res = game.move(PieceType.SPY, everySpace[49], everySpace[39]); 
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(new Piece(PieceType.BOMB, PlayerColor.RED), everySpace[39]));
+		
+		assertEquals(game.getPieceAt(everySpace[39]), new Piece(PieceType.BOMB, PlayerColor.RED));
+		assertNull(game.getPieceAt(everySpace[49]));
+	}
+	
+	@Test
+	public void spyKillMarshalTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
+		res = game.move(PieceType.SPY, everySpace[41], everySpace[51]);
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(redPieces[31], everySpace[51]));
+		assertEquals(game.getPieceAt(everySpace[51]), redPieces[31]);
+		assertNull(game.getPieceAt(everySpace[41]));
+	}
+	
+	@Test
+	public void spyKillMarshalTest2() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
+		game.move(PieceType.SPY, everySpace[68], everySpace[58]);
+		game.move(PieceType.GENERAL, everySpace[37], everySpace[38]);
+		
+		res = game.move(PieceType.SPY, everySpace[58], everySpace[48]);
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(bluePieces[31], everySpace[48]));
+		assertEquals(game.getPieceAt(everySpace[48]), bluePieces[31]);
+		assertNull(game.getPieceAt(everySpace[58]));
+	}
+	
+	@Test
+	public void MarshalKillSpyTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
+		game.move(PieceType.MINER, everySpace[30], everySpace[40]);
+		res = game.move(PieceType.MARSHAL, everySpace[51], everySpace[41]);
+		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertEquals(res.getBattleWinner(), new PieceLocationDescriptor(bluePieces[38], everySpace[41]));
+		assertEquals(game.getPieceAt(everySpace[41]), bluePieces[38]);
+		assertNull(game.getPieceAt(everySpace[51]));
+	}
+	
+	@Test
+	public void redResignTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		res = game.move(null, null, null);
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
+	}
+	
+	@Test
+	public void blueResignTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		final MoveResult res;
+		
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[35], everySpace[45]);
+		
+		res = game.move(null, null, null);
+		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
+	}
+	
 }

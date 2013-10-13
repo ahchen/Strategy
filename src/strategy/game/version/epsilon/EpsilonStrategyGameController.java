@@ -8,11 +8,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import strategy.common.PlayerColor;
 import strategy.common.StrategyException;
+import strategy.common.StrategyRuntimeException;
 import strategy.game.StrategyGameController;
 import strategy.game.common.Coordinate;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
+import strategy.game.common.MoveResult;
+import strategy.game.common.MoveResultStatus;
 import strategy.game.common.Piece;
 import strategy.game.common.PieceLocationDescriptor;
 import strategy.game.common.PieceType;
@@ -20,7 +24,7 @@ import strategy.game.version.StrategyGameControllerImpl;
 
 /**
  * @author Alex C
- *
+ * @version October 15, 2013
  */
 public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		implements StrategyGameController {
@@ -34,7 +38,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		super(redPieces, bluePieces);
 	}
 
-	/* (non-Javadoc)
+	/* 
 	 * @see strategy.game.version.StrategyGameControllerImpl#setVariables(java.util.Collection, java.util.Collection)
 	 */
 	@Override
@@ -79,7 +83,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		BLUE_SPACE_TOTAL = 3220;
 	}
 
-	/* (non-Javadoc)
+	/* 
 	 * @see strategy.game.version.StrategyGameControllerImpl#validatePiecesAndLocations(java.util.Collection)
 	 */
 	@Override
@@ -96,7 +100,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		}
 		
 		// number of types of pieces each player is allowed to have
-		Map<PieceType, Integer> requiredPieces = new HashMap<PieceType, Integer>();
+		final Map<PieceType, Integer> requiredPieces = new HashMap<PieceType, Integer>();
 		requiredPieces.put(PieceType.MARSHAL, 1);
 		requiredPieces.put(PieceType.GENERAL, 1);
 		requiredPieces.put(PieceType.COLONEL, 2);
@@ -180,6 +184,208 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		// set choke pieces
 		for (int i = 0; i < CHOKE_POINT_LOCATIONS.length; i++) {
 			board.put(CHOKE_POINT_LOCATIONS[i], CHOKE_POINT);
+		}
+	}
+	
+	@Override
+	public MoveResult move(PieceType piece, Location from, Location to)
+			throws StrategyException {
+		
+		if (piece == null && from == null && to == null) {
+			// blue was last to move so red resigned
+			if (lastPlayerColor == PlayerColor.BLUE) {
+				return new MoveResult(MoveResultStatus.BLUE_WINS, null);
+			}
+			else {
+				// otherwise red wins
+				return new MoveResult(MoveResultStatus.RED_WINS, null);
+			}
+		}
+		else {
+			return super.move(piece, from, to);
+		}
+	}
+	
+	@Override
+	protected MoveResult battle(PieceLocationDescriptor from,PieceLocationDescriptor to) {
+		final Piece fromPiece = from.getPiece();
+		final Piece toPiece = to.getPiece();
+		
+		final Location fromLoc = from.getLocation();
+		final Location toLoc = to.getLocation();
+		 
+		
+		// if attacking BOMB and attacker is not a miner
+		if (toPiece.getType() == PieceType.BOMB && fromPiece.getType() != PieceType.MINER) {
+			// piece gets destroyed
+			board.put(fromLoc, null);
+			
+			if (fromPiece.getOwner() == PlayerColor.BLUE) {
+				numBlueMovablePieces--;
+			}
+			else {
+				numRedMovablePieces--;
+			}
+
+			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(toPiece, toLoc));
+		}
+		// special case of spy attacking marshal
+		else if (fromPiece.getType() == PieceType.SPY && toPiece.getType() == PieceType.MARSHAL) {
+			// spy wins
+			board.put(fromLoc, null);
+			board.put(toLoc, fromPiece);
+			
+			if (fromPiece.getOwner() == PlayerColor.BLUE) {
+				numRedMovablePieces--;
+			}
+			else {
+				numBlueMovablePieces--;
+			}
+
+			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, toLoc));
+		}
+		else if (fromPiece.getType() == PieceType.FIRST_LIEUTENANT && toPiece.getType() == PieceType.LIEUTENANT ||
+				fromPiece.getType() == PieceType.LIEUTENANT && toPiece.getType() == PieceType.FIRST_LIEUTENANT) {
+			// both pieces are destroyed
+			board.put(fromLoc, null);
+			board.put(toLoc, null);
+			
+			numRedMovablePieces--;
+			numBlueMovablePieces--;
+			
+			return new MoveResult(MoveResultStatus.OK, null);
+		}
+		else {
+			 return super.battle(from, to);
+		}
+	}
+	
+	/**
+	 * Determines if moving to the given to location is valid from the given from location
+	 * @param from base location
+	 * @param to location to go
+	 * @throws StrategyException
+	 */
+	@Override
+	protected void checkLocations(Location from, Location to) throws StrategyException {
+		
+		try {
+			if (getPieceAt(from).getType() == PieceType.SCOUT) {
+				checkScoutLocation(from, to);
+			}
+			else if (getPieceAt(from).getType() == PieceType.FIRST_LIEUTENANT) {
+				checkFirstLieutenantLocation(from, to);
+			}
+			else {
+				if (from.distanceTo(to) > 1) {
+					throw new StrategyException("Locations are too far apart");
+				}
+			}
+		}
+		catch (StrategyRuntimeException e) {
+			throw new StrategyException(e.getMessage());
+		}
+	}
+	
+
+	/**
+	 * Checks the validity of a move if the piece moving is a scout 
+	 * @param from the location the scout is moving form
+	 * @param to the location the scout is moving to
+	 * @throws StrategyException thrown if the move for the scout is deemed to be invalid
+	 */
+	private void checkScoutLocation(Location from, Location to) throws StrategyException {
+		
+		try {
+			final int moveDist = from.distanceTo(to);
+			
+			if (moveDist > 1) {
+				if (board.get(to) != null) {
+					throw new StrategyException("Cannot attack when moving scout more than 1 space");
+				}
+				// scout moving vertically multiple spaces
+				else if (from.getCoordinate(Coordinate.X_COORDINATE) - to.getCoordinate(Coordinate.X_COORDINATE) == 0) {
+					final int fromY = from.getCoordinate(Coordinate.Y_COORDINATE);
+					final int toY = to.getCoordinate(Coordinate.Y_COORDINATE);
+					final int staticX = from.getCoordinate(Coordinate.X_COORDINATE);
+
+					// scout moving up the board
+					if (toY > fromY) {
+						for (int y = fromY + 1; y < toY; y++) {
+							if (board.get(new Location2D(staticX, y)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+					// scout moving down the board
+					else {
+						for (int y = fromY - 1; y > toY; y--) {
+							if (board.get(new Location2D(staticX, y)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+				}
+				// scout moving horizontally multiple spaces
+				else {
+					final int fromX = from.getCoordinate(Coordinate.X_COORDINATE);
+					final int toX = to.getCoordinate(Coordinate.X_COORDINATE);
+					final int staticY = from.getCoordinate(Coordinate.Y_COORDINATE);
+					
+					// scout moving left
+					if (toX > fromX) {
+						for (int x = fromX + 1; x < toX; x++) {
+							if (board.get(new Location2D(x, staticY)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+					//scout moving right
+					else {
+						for (int x = fromX - 1; x > toX; x--) {
+							if (board.get(new Location2D(x, staticY)) != null) {
+								throw new StrategyException("Not all spaces clear between movement locations for Scout");
+							}
+						}
+					}
+				}
+			}
+		}
+		catch (StrategyRuntimeException e) {
+			throw new StrategyException(e.getMessage());
+		}
+	}
+	
+	/**
+	 * TODO
+	 * @param from
+	 * @param to
+	 * @throws StrategyException
+	 */
+	private void checkFirstLieutenantLocation(Location from, Location to) throws StrategyException {
+		try {
+			final int moveDist = from.distanceTo(to);
+			if (moveDist > 1) {
+				if (moveDist == 2) {
+					if (getPieceAt(to) == null) {
+						throw new StrategyException("1ST LT cannot move 2 spaces if not attacking");
+					}
+					else {
+						final int midpointX = (from.getCoordinate(Coordinate.X_COORDINATE) + to.getCoordinate(Coordinate.X_COORDINATE)) / 2;
+						final int midpointY = (from.getCoordinate(Coordinate.Y_COORDINATE) + to.getCoordinate(Coordinate.Y_COORDINATE)) / 2;
+						
+						if (getPieceAt(new Location2D(midpointX, midpointY)) != null) {
+							throw new StrategyException("Piece in the way of attack");
+						}
+					}
+				}
+				else {
+					throw new StrategyException("Cannot move more than 2 spaces");
+				}
+			}
+		}
+		catch (StrategyRuntimeException e) {
+			throw new StrategyException(e.getMessage());
 		}
 	}
 

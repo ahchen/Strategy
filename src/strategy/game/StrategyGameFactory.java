@@ -118,7 +118,7 @@ public class StrategyGameFactory
 			Collection<PieceLocationDescriptor> redConfiguration, 
 			Collection<PieceLocationDescriptor> blueConfiguration, 
 			Collection<StrategyGameObserver>observers) throws StrategyException {
-		return new EpsilonStrategyGameController(blueConfiguration, blueConfiguration);
+		return new EpsilonStrategyGameController(redConfiguration, blueConfiguration);
 	} 
 	
 

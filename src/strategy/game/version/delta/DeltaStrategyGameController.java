@@ -248,7 +248,7 @@ public class DeltaStrategyGameController extends StrategyGameControllerImpl
 		}
 		else {
 			 return super.battle(from, to);
-		}		
+		}
 	}
 	
 	/**

@@ -18,6 +18,8 @@ import strategy.game.StrategyGameController;
 import strategy.game.StrategyGameFactory;
 import strategy.game.common.Location;
 import strategy.game.common.Location2D;
+import strategy.game.common.MoveResult;
+import strategy.game.common.MoveResultStatus;
 import strategy.game.common.Piece;
 import strategy.game.common.PieceLocationDescriptor;
 import strategy.game.common.PieceType;
@@ -43,18 +45,21 @@ public class EpsilonStrategyTest {
 		PieceType.BOMB, PieceType.BOMB, PieceType.BOMB, PieceType.BOMB, 
 		PieceType.SERGEANT, PieceType.SERGEANT, PieceType.SERGEANT, 
 		PieceType.MINER, PieceType.MINER, PieceType.MINER, PieceType.MINER, 
-		PieceType.LIEUTENANT, PieceType.LIEUTENANT, PieceType.LIEUTENANT, 
-		PieceType.SCOUT, PieceType.SCOUT, PieceType.SCOUT, PieceType.SCOUT, 
+		PieceType.FIRST_LIEUTENANT,
+		PieceType.LIEUTENANT, 
+		PieceType.SCOUT, 
+		PieceType.FLAG, 
+		PieceType.SCOUT, PieceType.SCOUT, PieceType.SCOUT, 
 		PieceType.SERGEANT,
 		PieceType.SCOUT, PieceType.SCOUT, PieceType.SCOUT,
 		PieceType.BOMB,
 		PieceType.FLAG,
 		PieceType.MINER,
 		PieceType.SPY,
-		PieceType.LIEUTENANT,
 		PieceType.CAPTAIN,
-		PieceType.SCOUT,
 		PieceType.MAJOR,
+		PieceType.LIEUTENANT,
+		PieceType.FIRST_LIEUTENANT,
 		PieceType.COLONEL,
 		PieceType.GENERAL,
 		PieceType.MARSHAL,
@@ -66,21 +71,21 @@ public class EpsilonStrategyTest {
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 	 * 9 |BOMB |BOMB |BOMB |BOMB | CAP | CAP | CAP | MAJ | MAJ | COL | 
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-	 * 8 | LT  | LT  | LT  |MINER|MINER|MINER|MINER| SGT | SGT | SGT |
+	 * 8 |SCOUT| LT  | 1LT |MINER|MINER|MINER|MINER| SGT | SGT | SGT |
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-	 * 7 |FLAG |BOMB |SCOUT|SCOUT|SCOUT| SGT |SCOUT|SCOUT|SCOUT|SCOUT|
+	 * 7 |FLAG |BOMB |SCOUT|SCOUT|SCOUT| SGT |SCOUT|SCOUT|SCOUT|FLAG |
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-	 * 6 |BOMB | MAR | GEN | COL | MAJ |SCOUT| CAP | LT  | SPY |MINER|  
+	 * 6 |BOMB | MAR | GEN | COL | 1LT | LT  | MAJ | CAP | SPY |MINER|  
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 	 * 5 |     |     |CHOKE|CHOKE|     |     |CHOKE|CHOKE|     |     |
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 	 * 4 |     |     |CHOKE|CHOKE|     |     |CHOKE|CHOKE|     |     |
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-	 * 3 |MINER| SPY | LT  | CAP |SCOUT| MAJ | COL | GEN | MAR |BOMB | 
+	 * 3 |MINER| SPY | CAP | MAJ | LT  | 1LT | COL | GEN | MAR |BOMB | 
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-	 * 2 |SCOUT|SCOUT|SCOUT|SCOUT| SGT |SCOUT|SCOUT|SCOUT|BOMB |FLAG |
+	 * 2 |FLAG |SCOUT|SCOUT|SCOUT| SGT |SCOUT|SCOUT|SCOUT|BOMB |FLAG |
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-	 * 1 | SGT | SGT | SGT |MINER|MINER|MINER|MINER| LT  | LT  | LT  | 
+	 * 1 | SGT | SGT | SGT |MINER|MINER|MINER|MINER| 1LT | LT  |SCOUT| 
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 	 * 0 | COL | MAJ | MAJ | CAP | CAP | CAP |BOMB |BOMB |BOMB |BOMB |
 	 * - +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -126,8 +131,226 @@ public class EpsilonStrategyTest {
 	}
 	
 	@Test
-	public void CreateInValidGameTest() throws StrategyException {
+	public void CreateValidGameTest() throws StrategyException {
 		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		assertNotNull(game);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void NullCollectionTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(null, null, null); 
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void NotEnoughPiecesTest() throws StrategyException {
+		final Collection<PieceLocationDescriptor> redOnePiece, blueOnePiece;
+		
+		// create new collection
+		redOnePiece = new ArrayList<PieceLocationDescriptor>();
+		blueOnePiece = new ArrayList<PieceLocationDescriptor>();
+		
+		// add one piece to the collection
+		redOnePiece.add(new PieceLocationDescriptor(redPieces[0], everySpace[0]));
+		blueOnePiece.add(new PieceLocationDescriptor(bluePieces[0], everySpace[99]));
+		
+		game = gameFactory.makeEpsilonStrategyGame(redOnePiece, blueOnePiece, null);
+	} 
+	
+	@Test(expected=StrategyException.class)
+	public void InvalidPieceCombinationTest() throws StrategyException {
+		final Collection<PieceLocationDescriptor> invalidRed = redCollection;
+		final Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
+		
+		// remove a red and blue piece
+		invalidRed.remove(new PieceLocationDescriptor(redPieces[0], everySpace[0]));
+		invalidBlue.remove(new PieceLocationDescriptor(bluePieces[0], everySpace[99]));
+		
+		// add an extra piece where the removed piece would have been
+		invalidRed.add(new PieceLocationDescriptor(redPieces[1], everySpace[0]));
+		invalidBlue.add(new PieceLocationDescriptor(bluePieces[1], everySpace[99]));
+		
+		game = gameFactory.makeEpsilonStrategyGame(invalidRed, invalidBlue, null);
+	} 
+	
+	@Test(expected=StrategyException.class)
+	public void InvalidPieceLayoutTest() throws StrategyException {
+		final Collection<PieceLocationDescriptor> invalidRed = redCollection;
+		final Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
+		
+		invalidRed.remove(new PieceLocationDescriptor(redPieces[0], everySpace[0]));
+		invalidBlue.remove(new PieceLocationDescriptor(bluePieces[0], everySpace[99]));
+		
+		invalidRed.add(new PieceLocationDescriptor(redPieces[0], everySpace[1]));
+		invalidBlue.add(new PieceLocationDescriptor(bluePieces[0], everySpace[98]));
+		
+		game = gameFactory.makeEpsilonStrategyGame(invalidRed, invalidBlue, null);
+	} 
+	
+	@Test(expected=StrategyException.class)
+	public void OneFlagTest() throws StrategyException {
+		final Collection<PieceLocationDescriptor> invalidRed = redCollection;
+		final Collection<PieceLocationDescriptor> invalidBlue = blueCollection;
+		
+		// remove second flag
+		invalidRed.remove(new PieceLocationDescriptor(redPieces[20], everySpace[20]));
+		invalidBlue.remove(new PieceLocationDescriptor(bluePieces[20], everySpace[79]));
+		
+		// add in a missing scout
+		invalidRed.add(new PieceLocationDescriptor(redPieces[21], everySpace[20]));
+		invalidBlue.add(new PieceLocationDescriptor(bluePieces[21], everySpace[79]));
+		
+		game = gameFactory.makeEpsilonStrategyGame(invalidRed, invalidBlue, null);
+	} 
+	
+	@Test
+	public void ChokePointLocationTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		assertEquals(game.getPieceAt(everySpace[42]).getType(), PieceType.CHOKE_POINT);
+		assertEquals(game.getPieceAt(everySpace[43]).getType(), PieceType.CHOKE_POINT);
+		assertEquals(game.getPieceAt(everySpace[46]).getType(), PieceType.CHOKE_POINT);
+		assertEquals(game.getPieceAt(everySpace[47]).getType(), PieceType.CHOKE_POINT);
+		
+		assertEquals(game.getPieceAt(everySpace[52]).getType(), PieceType.CHOKE_POINT);
+		assertEquals(game.getPieceAt(everySpace[53]).getType(), PieceType.CHOKE_POINT);
+		assertEquals(game.getPieceAt(everySpace[56]).getType(), PieceType.CHOKE_POINT);
+		assertEquals(game.getPieceAt(everySpace[57]).getType(), PieceType.CHOKE_POINT);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void StartGameTwiceTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		game.startGame();
+		game.startGame();
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveBeforeStartGame() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		// move before game start
+		game.move(PieceType.SERGEANT, new Location2D(5,1), new Location2D(5,2));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveFlag() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.FLAG, everySpace[29], everySpace[39]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveChokePointTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.CHOKE_POINT, everySpace[43], everySpace[44]);
+	} 
+	
+	@Test(expected=StrategyException.class)
+	public void locationOffBoard() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.MARSHAL, new Location2D(10,10), new Location2D(10,11));
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveInvalidFromLocation() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		
+		game.move(PieceType.MARSHAL, everySpace[39], everySpace[49]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveInvalidToLocation() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		// occupied by another same player piece
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[39]);
 	}
 
+	@Test(expected=StrategyException.class)
+	public void moveSameSpaceTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.MINER, everySpace[30], everySpace[31]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveTwoSpacesNotScoutTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.MAJOR, everySpace[35], everySpace[55]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveDiagonallyTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.MINER, everySpace[30], everySpace[41]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void blueFirstMoveTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.MINER, everySpace[69], everySpace[59]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void playerMoveTwiceTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.MINER, everySpace[30], everySpace[40]);
+		game.move(PieceType.MINER, everySpace[40], everySpace[50]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveBombTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.BOMB, everySpace[39], everySpace[49]);
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void moveToChokePointTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.GENERAL, everySpace[37], everySpace[47]);
+	}
+
+	@Test(expected=StrategyException.class)
+	public void FirstLTMove2SpacesTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[35], everySpace[55]);
+	}
+	
+	@Test
+	public void FirstLTAttack2SpacesTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		
+		MoveResult res = game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[44]);
+		
+		assertNull(game.getPieceAt(everySpace[44]));
+		assertNull(game.getPieceAt(everySpace[64]));
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
+		assertNull(res.getBattleWinner());		
+	}
 }

@@ -32,11 +32,11 @@ public class MockDeltaStrategyGameController extends DeltaStrategyGameController
 	 */
 	public MockDeltaStrategyGameController(Collection<PieceLocationDescriptor> redPieces,
 			Collection<PieceLocationDescriptor> bluePieces, Map<Location, Piece> board,
-			int numRedMoveable, int numBlueMovable) throws StrategyException {
+			int numRedMovable, int numBlueMovable) throws StrategyException {
 		super(redPieces, bluePieces);
 		
 		this.board = board;
-		numRedMovablePieces = numRedMoveable;
+		numRedMovablePieces = numRedMovable;
 		numBlueMovablePieces = numBlueMovable;
 	}
 }

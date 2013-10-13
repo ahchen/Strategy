@@ -1,10 +1,16 @@
 x 1ST LT
   x Move
-  - Battle
+  x Battle
     x win = move
     x lost = dont move
 x 2 FLAGS
   x Substitute any piece
 x Game End BOTH Flags
 x Resign
+- Num Movable Pieces variable
 - GameReporter
+
+TODO TESTS
+- scout movement MOCK
+- draw (no move pieces) MOCK
+- no move pieces red/blue MOCK

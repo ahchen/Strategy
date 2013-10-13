@@ -128,8 +128,9 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		
 		// determine which color this collection is 
 		firstPiece = firstPieceIter.next();
+		final PlayerColor whichColor = firstPiece.getPiece().getOwner();
 		// set the spaceTotal to the appropriate number
-		switch(firstPiece.getPiece().getOwner()) 
+		switch(whichColor) 
 		{
 			case RED:
 				spaceTotal = RED_SPACE_TOTAL;
@@ -161,7 +162,8 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 			pieceTotal += Math.abs(reqPieceIter.next());
 		}
 		
-		// if any of the counts are not 0, there was an invalid combination of pieces
+		// total should only be 1, 1 extra piece left over
+		// number of flags left over should be 0 (required to have 2 flags)
 		if (pieceTotal != 1 || requiredPieces.get(PieceType.FLAG) != 0) {
 			throw new StrategyException("Invalid Combination of Pieces"); 
 		}
@@ -170,6 +172,19 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		if (spaceTotal != 0)
 		{
 			throw new StrategyException("Invalid Placement of Pieces");
+		}
+		
+		// a bomb wasn't replaced so a movable piece was taken out
+		// for a flag (non-movable piece)
+		// number of movable pieces decreases
+		if (requiredPieces.get(PieceType.BOMB) == 0) {
+			switch(whichColor) {
+				case RED:
+					numRedMovablePieces--;
+					break;
+				case BLUE:
+					numBlueMovablePieces--;
+			}
 		}
 
 	}

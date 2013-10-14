@@ -427,6 +427,23 @@ public class EpsilonStrategyTest {
 	}
 	
 	@Test
+	public void LtAttack1STLTTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		
+		MoveResult res;
+		
+		game.startGame();
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[54]);
+
+		res = game.move(PieceType.LIEUTENANT, everySpace[44], everySpace[54]);
+		
+		assertNull(game.getPieceAt(everySpace[44]));
+		assertNull(game.getPieceAt(everySpace[54]));
+		
+	}
+	
+	@Test
 	public void minerAttacksBombTest() throws StrategyException {
 		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
 		
@@ -574,7 +591,7 @@ public class EpsilonStrategyTest {
 		
 		final MoveResult res;
 		
-		game.move(PieceType.MARSHAL, everySpace[28], everySpace[48]);
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
 		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
 		
 		res = game.move(null, null, null);
@@ -897,6 +914,270 @@ public class EpsilonStrategyTest {
 		assertNull(game.getPieceAt(everySpace[65]));
 	}
 	
+	@Test
+	public void NoBlueMovablePiecesLeft() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		game.startGame();
+		
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
+		game.move(PieceType.SPY, everySpace[68], everySpace[58]);
+		game.move(PieceType.MARSHAL, everySpace[48], everySpace[58]);
+		game.move(PieceType.MINER, everySpace[69], everySpace[68]);
+		game.move(PieceType.MARSHAL, everySpace[58], everySpace[68]);
+		game.move(PieceType.SCOUT, everySpace[78], everySpace[68]);
+		game.move(PieceType.MARSHAL, everySpace[78], everySpace[88]);
+		game.move(PieceType.SERGEANT, everySpace[89], everySpace[88]);
+		game.move(PieceType.MARSHAL, everySpace[89], everySpace[99]);
+		game.move(PieceType.MAJOR, everySpace[98], everySpace[99]);
+		game.move(PieceType.MARSHAL, everySpace[98], everySpace[97]);
+		game.move(PieceType.SERGEANT, everySpace[87], everySpace[97]);
+		game.move(PieceType.MARSHAL, everySpace[87], everySpace[77]);
+		game.move(PieceType.CAPTAIN, everySpace[67], everySpace[77]);
+		game.move(PieceType.MARSHAL, everySpace[67], everySpace[66]);
+		game.move(PieceType.SCOUT, everySpace[76], everySpace[66]);
+		game.move(PieceType.MARSHAL, everySpace[76], everySpace[86]);
+		game.move(PieceType.CAPTAIN, everySpace[96], everySpace[86]);
+		game.move(PieceType.MARSHAL, everySpace[96], everySpace[95]);
+		game.move(PieceType.CAPTAIN, everySpace[94], everySpace[95]);
+		game.move(PieceType.MARSHAL, everySpace[94], everySpace[84]);
+		game.move(PieceType.MINER, everySpace[85], everySpace[84]);
+		game.move(PieceType.MARSHAL, everySpace[85], everySpace[75]);
+		game.move(PieceType.LIEUTENANT, everySpace[65], everySpace[75]);
+		game.move(PieceType.MARSHAL, everySpace[65], everySpace[64]);
+		game.move(PieceType.SCOUT, everySpace[74], everySpace[64]);
+		game.move(PieceType.MARSHAL, everySpace[74], everySpace[84]);
+		game.move(PieceType.MINER, everySpace[83], everySpace[84]);
+		game.move(PieceType.MARSHAL, everySpace[83], everySpace[73]);
+		game.move(PieceType.COLONEL, everySpace[63], everySpace[73]);
+		game.move(PieceType.MARSHAL, everySpace[63], everySpace[62]);
+		game.move(PieceType.SCOUT, everySpace[72], everySpace[62]);
+		game.move(PieceType.MARSHAL, everySpace[72], everySpace[82]);
+		
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[62]); // blue
+		game.move(PieceType.MARSHAL, everySpace[82], everySpace[81]); // red
+		game.move(PieceType.MARSHAL, everySpace[62], everySpace[72]); // blue
+		game.move(PieceType.MARSHAL, everySpace[81], everySpace[80]); // red 
+		game.move(PieceType.MARSHAL, everySpace[72], everySpace[82]); // blue 
+		game.move(PieceType.MARSHAL, everySpace[80], everySpace[81]); // red
+		
+		final MoveResult res = game.move(PieceType.MARSHAL, everySpace[82], everySpace[81]); // blue
+		
+		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
+	}
+	
+	@Test
+	public void NoBlueMovablePiecesLeft2() throws StrategyException {
+		// remove blue bomb
+		blueCollection.remove(new PieceLocationDescriptor(bluePieces[28], everySpace[71]));
+		// replace it with the missing scout that was replaced from additional flag
+		blueCollection.add(new PieceLocationDescriptor(bluePieces[21], everySpace[71]));
+		
+		// we should have to get rid of 1 more movable piece before the game ends this time
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		game.startGame();
+		
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
+		game.move(PieceType.SPY, everySpace[68], everySpace[58]);
+		game.move(PieceType.MARSHAL, everySpace[48], everySpace[58]);
+		game.move(PieceType.MINER, everySpace[69], everySpace[68]);
+		game.move(PieceType.MARSHAL, everySpace[58], everySpace[68]);
+		game.move(PieceType.SCOUT, everySpace[78], everySpace[68]);
+		game.move(PieceType.MARSHAL, everySpace[78], everySpace[88]);
+		game.move(PieceType.SERGEANT, everySpace[89], everySpace[88]);
+		game.move(PieceType.MARSHAL, everySpace[89], everySpace[99]);
+		game.move(PieceType.MAJOR, everySpace[98], everySpace[99]);
+		game.move(PieceType.MARSHAL, everySpace[98], everySpace[97]);
+		game.move(PieceType.SERGEANT, everySpace[87], everySpace[97]);
+		game.move(PieceType.MARSHAL, everySpace[87], everySpace[77]);
+		game.move(PieceType.CAPTAIN, everySpace[67], everySpace[77]);
+		game.move(PieceType.MARSHAL, everySpace[67], everySpace[66]);
+		game.move(PieceType.SCOUT, everySpace[76], everySpace[66]);
+		game.move(PieceType.MARSHAL, everySpace[76], everySpace[86]);
+		game.move(PieceType.CAPTAIN, everySpace[96], everySpace[86]);
+		game.move(PieceType.MARSHAL, everySpace[96], everySpace[95]);
+		game.move(PieceType.CAPTAIN, everySpace[94], everySpace[95]);
+		game.move(PieceType.MARSHAL, everySpace[94], everySpace[84]);
+		game.move(PieceType.MINER, everySpace[85], everySpace[84]);
+		game.move(PieceType.MARSHAL, everySpace[85], everySpace[75]);
+		game.move(PieceType.LIEUTENANT, everySpace[65], everySpace[75]);
+		game.move(PieceType.MARSHAL, everySpace[65], everySpace[64]);
+		game.move(PieceType.SCOUT, everySpace[74], everySpace[64]);
+		game.move(PieceType.MARSHAL, everySpace[74], everySpace[84]);
+		game.move(PieceType.MINER, everySpace[83], everySpace[84]);
+		game.move(PieceType.MARSHAL, everySpace[83], everySpace[73]);
+		game.move(PieceType.COLONEL, everySpace[63], everySpace[73]);
+		game.move(PieceType.MARSHAL, everySpace[63], everySpace[62]);
+		game.move(PieceType.SCOUT, everySpace[72], everySpace[62]);
+		game.move(PieceType.MARSHAL, everySpace[72], everySpace[82]);
+		game.move(PieceType.LIEUTENANT, everySpace[81], everySpace[82]);
+		game.move(PieceType.MARSHAL, everySpace[81], everySpace[80]);
+		
+		game.move(PieceType.SCOUT, everySpace[71], everySpace[81]);
+		game.move(PieceType.MARSHAL, everySpace[80], everySpace[81]); // red
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[71]); // blue
+		
+		final MoveResult res = game.move(PieceType.MARSHAL, everySpace[81], everySpace[71]); // red
+		
+		assertEquals(res.getStatus(), MoveResultStatus.RED_WINS);
+	}
+	
+	@Test
+	public void NoRedMovablePiecesLeft() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		game.startGame();
+		
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
+		
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
+		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
+		game.move(PieceType.MARSHAL, everySpace[51], everySpace[41]);
+		game.move(PieceType.MINER, everySpace[30], everySpace[31]);
+		game.move(PieceType.MARSHAL, everySpace[41], everySpace[31]);
+		game.move(PieceType.SCOUT, everySpace[21], everySpace[31]);
+		game.move(PieceType.MARSHAL, everySpace[21], everySpace[11]);
+		game.move(PieceType.SERGEANT, everySpace[10], everySpace[11]);
+		game.move(PieceType.MARSHAL, everySpace[10], everySpace[0]);
+		game.move(PieceType.MAJOR, everySpace[1], everySpace[0]);
+		game.move(PieceType.MARSHAL, everySpace[1], everySpace[2]);
+		game.move(PieceType.SERGEANT, everySpace[12], everySpace[2]);
+		game.move(PieceType.MARSHAL, everySpace[12], everySpace[22]);
+		game.move(PieceType.CAPTAIN, everySpace[32], everySpace[22]);
+		game.move(PieceType.MARSHAL, everySpace[32], everySpace[33]);
+		game.move(PieceType.SCOUT, everySpace[23], everySpace[33]);
+		game.move(PieceType.MARSHAL, everySpace[23], everySpace[13]);
+		game.move(PieceType.CAPTAIN, everySpace[3], everySpace[13]);
+		game.move(PieceType.MARSHAL, everySpace[3], everySpace[4]);
+		game.move(PieceType.CAPTAIN, everySpace[5], everySpace[4]);
+		game.move(PieceType.MARSHAL, everySpace[5], everySpace[15]);
+		game.move(PieceType.MINER, everySpace[14], everySpace[15]);
+		game.move(PieceType.MARSHAL, everySpace[14], everySpace[24]);
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[24]);
+		game.move(PieceType.MARSHAL, everySpace[34], everySpace[35]);
+		game.move(PieceType.SCOUT, everySpace[25], everySpace[35]);
+		game.move(PieceType.MARSHAL, everySpace[25], everySpace[15]);
+		game.move(PieceType.MINER, everySpace[16], everySpace[15]);
+		game.move(PieceType.MARSHAL, everySpace[16], everySpace[26]);
+		game.move(PieceType.COLONEL, everySpace[36], everySpace[26]);
+		game.move(PieceType.MARSHAL, everySpace[36], everySpace[37]);
+		game.move(PieceType.SCOUT, everySpace[27], everySpace[37]);
+		game.move(PieceType.MARSHAL, everySpace[27], everySpace[17]);
+		
+		game.move(PieceType.MARSHAL, everySpace[48], everySpace[38]); // red
+		
+		game.move(PieceType.MARSHAL, everySpace[17], everySpace[18]); // blue
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[37]); 
+		game.move(PieceType.MARSHAL, everySpace[18], everySpace[19]); //blue
+		game.move(PieceType.MARSHAL, everySpace[37], everySpace[27]);  
+		game.move(PieceType.MARSHAL, everySpace[19], everySpace[18]); // blue
+		game.move(PieceType.MARSHAL, everySpace[27], everySpace[17]);  
+		
+		final MoveResult res = game.move(PieceType.MARSHAL, everySpace[18], everySpace[17]); // blue
+		
+		assertEquals(res.getStatus(), MoveResultStatus.BLUE_WINS);
+	}
+	
+	@Test
+	public void GameDrawTest() throws StrategyException {
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+		game.startGame();
+		
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
+		game.move(PieceType.SPY, everySpace[68], everySpace[58]);
+		game.move(PieceType.MARSHAL, everySpace[48], everySpace[58]);
+		game.move(PieceType.MINER, everySpace[69], everySpace[68]);
+		game.move(PieceType.MARSHAL, everySpace[58], everySpace[68]);
+		game.move(PieceType.SCOUT, everySpace[78], everySpace[68]);
+		game.move(PieceType.MARSHAL, everySpace[78], everySpace[88]);
+		game.move(PieceType.SERGEANT, everySpace[89], everySpace[88]);
+		game.move(PieceType.MARSHAL, everySpace[89], everySpace[99]);
+		game.move(PieceType.MAJOR, everySpace[98], everySpace[99]);
+		game.move(PieceType.MARSHAL, everySpace[98], everySpace[97]);
+		game.move(PieceType.SERGEANT, everySpace[87], everySpace[97]);
+		game.move(PieceType.MARSHAL, everySpace[87], everySpace[77]);
+		game.move(PieceType.CAPTAIN, everySpace[67], everySpace[77]);
+		game.move(PieceType.MARSHAL, everySpace[67], everySpace[66]);
+		game.move(PieceType.SCOUT, everySpace[76], everySpace[66]);
+		game.move(PieceType.MARSHAL, everySpace[76], everySpace[86]);
+		game.move(PieceType.CAPTAIN, everySpace[96], everySpace[86]);
+		game.move(PieceType.MARSHAL, everySpace[96], everySpace[95]);
+		game.move(PieceType.CAPTAIN, everySpace[94], everySpace[95]);
+		game.move(PieceType.MARSHAL, everySpace[94], everySpace[84]);
+		game.move(PieceType.MINER, everySpace[85], everySpace[84]);
+		game.move(PieceType.MARSHAL, everySpace[85], everySpace[75]);
+		game.move(PieceType.LIEUTENANT, everySpace[65], everySpace[75]);
+		game.move(PieceType.MARSHAL, everySpace[65], everySpace[64]);
+		game.move(PieceType.SCOUT, everySpace[74], everySpace[64]);
+		game.move(PieceType.MARSHAL, everySpace[74], everySpace[84]);
+		game.move(PieceType.MINER, everySpace[83], everySpace[84]);
+		game.move(PieceType.MARSHAL, everySpace[83], everySpace[73]);
+		game.move(PieceType.COLONEL, everySpace[63], everySpace[73]);
+		game.move(PieceType.MARSHAL, everySpace[63], everySpace[62]);
+		game.move(PieceType.SCOUT, everySpace[72], everySpace[62]);
+		game.move(PieceType.MARSHAL, everySpace[72], everySpace[82]);
+		game.move(PieceType.LIEUTENANT, everySpace[81], everySpace[82]);
+		game.move(PieceType.MARSHAL, everySpace[81], everySpace[80]); // all but blue MARSHAL
+		
+		game.move(PieceType.MARSHAL, everySpace[61], everySpace[51]);
+		game.move(PieceType.SPY, everySpace[31], everySpace[41]);
+		game.move(PieceType.MARSHAL, everySpace[51], everySpace[41]);
+		game.move(PieceType.MINER, everySpace[30], everySpace[31]);
+		game.move(PieceType.MARSHAL, everySpace[41], everySpace[31]);
+		game.move(PieceType.SCOUT, everySpace[21], everySpace[31]);
+		game.move(PieceType.MARSHAL, everySpace[21], everySpace[11]);
+		game.move(PieceType.SERGEANT, everySpace[10], everySpace[11]);
+		game.move(PieceType.MARSHAL, everySpace[10], everySpace[0]);
+		game.move(PieceType.MAJOR, everySpace[1], everySpace[0]);
+		game.move(PieceType.MARSHAL, everySpace[1], everySpace[2]);
+		game.move(PieceType.SERGEANT, everySpace[12], everySpace[2]);
+		game.move(PieceType.MARSHAL, everySpace[12], everySpace[22]);
+		game.move(PieceType.CAPTAIN, everySpace[32], everySpace[22]);
+		game.move(PieceType.MARSHAL, everySpace[32], everySpace[33]);
+		game.move(PieceType.SCOUT, everySpace[23], everySpace[33]);
+		game.move(PieceType.MARSHAL, everySpace[23], everySpace[13]);
+		game.move(PieceType.CAPTAIN, everySpace[3], everySpace[13]);
+		game.move(PieceType.MARSHAL, everySpace[3], everySpace[4]);
+		game.move(PieceType.CAPTAIN, everySpace[5], everySpace[4]);
+		game.move(PieceType.MARSHAL, everySpace[5], everySpace[15]);
+		game.move(PieceType.MINER, everySpace[14], everySpace[15]);
+		game.move(PieceType.MARSHAL, everySpace[14], everySpace[24]);
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[24]);
+		game.move(PieceType.MARSHAL, everySpace[34], everySpace[35]);
+		game.move(PieceType.SCOUT, everySpace[25], everySpace[35]);
+		game.move(PieceType.MARSHAL, everySpace[25], everySpace[15]);
+		game.move(PieceType.MINER, everySpace[16], everySpace[15]);
+		game.move(PieceType.MARSHAL, everySpace[16], everySpace[26]);
+		game.move(PieceType.COLONEL, everySpace[36], everySpace[26]);
+		game.move(PieceType.MARSHAL, everySpace[36], everySpace[37]);
+		game.move(PieceType.SCOUT, everySpace[27], everySpace[37]);
+		game.move(PieceType.MARSHAL, everySpace[27], everySpace[17]);
+		game.move(PieceType.LIEUTENANT, everySpace[18], everySpace[17]);
+		game.move(PieceType.MARSHAL, everySpace[18], everySpace[19]); // All but red MARSHALL
+		
+		// MARSHALS go to kill each other
+		game.move(PieceType.MARSHAL, everySpace[80], everySpace[81]); // red
+		game.move(PieceType.MARSHAL, everySpace[19], everySpace[18]); // blue
+		game.move(PieceType.MARSHAL, everySpace[81], everySpace[82]); // red
+		game.move(PieceType.MARSHAL, everySpace[18], everySpace[17]); // blue
+		game.move(PieceType.MARSHAL, everySpace[82], everySpace[83]); // red
+		game.move(PieceType.MARSHAL, everySpace[17], everySpace[16]); // blue
+		game.move(PieceType.MARSHAL, everySpace[83], everySpace[84]); // red
+		game.move(PieceType.MARSHAL, everySpace[16], everySpace[15]); // blue
+		game.move(PieceType.MARSHAL, everySpace[84], everySpace[85]); // red
+		game.move(PieceType.MARSHAL, everySpace[15], everySpace[25]); // blue
+		
+		game.move(PieceType.MARSHAL, everySpace[85], everySpace[75]); // red
+		game.move(PieceType.MARSHAL, everySpace[25], everySpace[35]); // blue
+		game.move(PieceType.MARSHAL, everySpace[75], everySpace[65]); // red
+		game.move(PieceType.MARSHAL, everySpace[35], everySpace[45]); // blue
+		game.move(PieceType.MARSHAL, everySpace[65], everySpace[55]); // red
+		
+		final MoveResult res = game.move(PieceType.MARSHAL, everySpace[45], everySpace[55]);
+		
+		assertEquals(res.getStatus(), MoveResultStatus.DRAW);
+	}
+	
+	
 	/* ~~~~~~~~~~~~~~~~~~~~~~~~ USING MOCK ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 	@Test(expected=StrategyException.class)
 	public void moveScoutTestBlockedUp() throws StrategyException {
@@ -1095,5 +1376,7 @@ public class EpsilonStrategyTest {
 		game.move(PieceType.SCOUT, everySpace[9], everySpace[4]);
 		
 	}
+	
+	
 	
 }

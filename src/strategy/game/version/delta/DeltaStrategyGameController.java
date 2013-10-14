@@ -259,19 +259,12 @@ public class DeltaStrategyGameController extends StrategyGameControllerImpl
 	 */
 	@Override
 	protected void checkLocations(Location from, Location to) throws StrategyException {
-		
-		try {
-			if (getPieceAt(from).getType() == PieceType.SCOUT) {
-				checkScoutLocation(from, to);
-			}
-			else {
-				if (from.distanceTo(to) > 1) {
-					throw new StrategyException("Locations are too far apart");
-				}
-			}
+
+		if (getPieceAt(from).getType() == PieceType.SCOUT) {
+			checkScoutLocation(from, to);
 		}
-		catch (StrategyRuntimeException e) {
-			throw new StrategyException(e.getMessage());
+		else {
+			super.checkLocations(from, to);
 		}
 	}
 	

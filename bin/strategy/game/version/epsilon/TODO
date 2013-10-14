@@ -7,10 +7,7 @@ x 2 FLAGS
   x Substitute any piece
 x Game End BOTH Flags
 x Resign
-- Num Movable Pieces variable
+x Num Movable Pieces variable
+  x need to test (BLEH)
 - GameReporter
 
-TODO TESTS
-- scout movement MOCK
-- draw (no move pieces) MOCK
-- no move pieces red/blue MOCK

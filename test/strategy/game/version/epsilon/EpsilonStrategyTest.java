@@ -5,6 +5,9 @@ package strategy.game.version.epsilon;
 
 import static org.junit.Assert.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,6 +28,8 @@ import strategy.game.common.MoveResultStatus;
 import strategy.game.common.Piece;
 import strategy.game.common.PieceLocationDescriptor;
 import strategy.game.common.PieceType;
+import strategy.game.common.StrategyGameObserver;
+import strategy.game.reporter.StrategyGameReporter;
 
 /**
  * @author Alex C
@@ -36,6 +41,7 @@ public class EpsilonStrategyTest {
 	private StrategyGameController game;
 	private Collection<PieceLocationDescriptor> redCollection;
 	private Collection<PieceLocationDescriptor> blueCollection;
+	private Collection<StrategyGameObserver> observers;
 	
 	private static final Location[] everySpace = new Location2D[100];  
 	// define pieces in certain configuration
@@ -117,6 +123,7 @@ public class EpsilonStrategyTest {
 	public void setup() {
 		redCollection = new ArrayList<PieceLocationDescriptor>();
 		blueCollection = new ArrayList<PieceLocationDescriptor>();
+		observers = new ArrayList<StrategyGameObserver>();
 		
 		int j = everySpace.length - 1;
 		for (int i=0; i < playerPieces.length; i++) {
@@ -440,7 +447,7 @@ public class EpsilonStrategyTest {
 		
 		assertNull(game.getPieceAt(everySpace[44]));
 		assertNull(game.getPieceAt(everySpace[54]));
-		
+		assertEquals(res.getStatus(), MoveResultStatus.OK);
 	}
 	
 	@Test
@@ -1195,7 +1202,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[60], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 		
@@ -1219,7 +1226,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[60], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 		
@@ -1244,7 +1251,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[9], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 
@@ -1268,7 +1275,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[9], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 
@@ -1293,7 +1300,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[9], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 
@@ -1318,7 +1325,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[9], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 
@@ -1345,7 +1352,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[9], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 
@@ -1368,7 +1375,7 @@ public class EpsilonStrategyTest {
 		newBoard.put(everySpace[9], bluePieces[21]);
 		
 		// use mock MockEpsilonStrategyGameController to set the board
-		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, newBoard, 2, 1);
+		game = new MockEpsilonStrategyGameController(redCollection, blueCollection, null, newBoard, 2, 1);
 		
 		game.startGame();
 
@@ -1377,6 +1384,268 @@ public class EpsilonStrategyTest {
 		
 	}
 	
+	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ USING OBSERVER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 	
+	@Test
+	public void ObserverStartGame() throws StrategyException {
+		StringWriter stringWriter = new StringWriter();
+		Writer printWriter = new PrintWriter(stringWriter);
+		StrategyGameObserver gameObs = new StrategyGameReporter(printWriter);
+		
+		StringWriter expectedOutput = new StringWriter();
+		
+		expectedOutput.write("Game Start Called.\n");
+		
+		expectedOutput.append("Red's Initial piece configuration is:\n");
+		
+		for (PieceLocationDescriptor pieceLocDes : redCollection) {
+			expectedOutput.append(pieceLocDes.getPiece() + " at " + pieceLocDes.getLocation() + "\n");
+		}
+		
+		expectedOutput.append("Blue's Initial piece configuration is:");
+		
+		for (PieceLocationDescriptor pieceLocDes : blueCollection) {
+			expectedOutput.append(pieceLocDes.getPiece() + " at " + pieceLocDes.getLocation() + "\n");
+		}
+		
+		observers.add(gameObs);
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, observers);
+
+		// extra new line to act as separator in console output
+		System.out.println("");
+		game.startGame();
+		
+		assertEquals(expectedOutput.getBuffer().toString(), stringWriter.getBuffer().toString());		
+	}
 	
+	@Test
+	public void RegisterObserver() throws StrategyException {
+		StringWriter stringWriter = new StringWriter();
+		Writer printWriter = new PrintWriter(stringWriter);
+		StrategyGameObserver gameObs = new StrategyGameReporter(printWriter);
+		
+		StringWriter expectedOutput = new StringWriter();
+		
+		expectedOutput.write("Game Start Called.\n");
+		
+		expectedOutput.append("Red's Initial piece configuration is:\n");
+		
+		for (PieceLocationDescriptor pieceLocDes : redCollection) {
+			expectedOutput.append(pieceLocDes.getPiece() + " at " + pieceLocDes.getLocation() + "\n");
+		}
+		
+		expectedOutput.append("Blue's Initial piece configuration is:");
+		
+		for (PieceLocationDescriptor pieceLocDes : blueCollection) {
+			expectedOutput.append(pieceLocDes.getPiece() + " at " + pieceLocDes.getLocation() + "\n");
+		}
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+
+		((EpsilonStrategyGameController) game).register(gameObs);
+		
+		// extra new line to act as separator in console output
+		System.out.println("");
+		game.startGame();
+		
+		assertEquals(expectedOutput.getBuffer().toString(), stringWriter.getBuffer().toString());		
+	}
+	
+	@Test
+	public void RemoveObserver() throws StrategyException {
+		StringWriter stringWriter = new StringWriter();
+		Writer printWriter = new PrintWriter(stringWriter);
+		StrategyGameObserver gameObs = new StrategyGameReporter(printWriter);
+		
+		StringWriter expectedOutput = new StringWriter();
+		
+		observers.add(gameObs);
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, observers);
+
+		((EpsilonStrategyGameController) game).unregister(gameObs);
+		
+		game.startGame();
+		
+		assertEquals(expectedOutput.getBuffer().toString(), stringWriter.getBuffer().toString());		
+	}
+	
+	@Test
+	public void ObserverMoveAndWinnerTest() throws StrategyException {
+		StringWriter stringWriter = new StringWriter();
+		Writer printWriter = new PrintWriter(stringWriter);
+		StrategyGameObserver gameObs = new StrategyGameReporter(printWriter);
+		
+		StringWriter expectedOutput = new StringWriter();
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+
+		game.startGame();
+		
+		// start game and then register the observer to avoid that massive output to console when 
+		// calling start game. Start game is already tested above.
+		((EpsilonStrategyGameController) game).register(gameObs);
+		
+		// extra new line to act as separator in console output
+		System.out.println("");
+		game.move(PieceType.MINER, everySpace[30], everySpace[40]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[30] + " to:" + everySpace[40] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[30] + " now at location " + everySpace[40] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[69], everySpace[59]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[69] + " to:" + everySpace[59] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30] + " now at location " + everySpace[59] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[40], everySpace[50]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[40] + " to:" + everySpace[50] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[30] + " now at location " + everySpace[50] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[59], everySpace[49]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[59] + " to:" + everySpace[49] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30]+ " now at location " + everySpace[49] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[50], everySpace[60]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[50] + " to:" + everySpace[60] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[30] + " now at location " + everySpace[60] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[49], everySpace[39]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[49] + " to:" + everySpace[39] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30] + " now at location " + everySpace[39] + "\n");
+		
+		// 1 flag captured
+		game.move(PieceType.MINER, everySpace[60], everySpace[70]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[60] + " to:" + everySpace[70] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[30] + " now at location " + everySpace[70] + "\n");
+		
+		// blue captures 1 red flag but game should not be over
+		game.move(PieceType.MINER, everySpace[39], everySpace[29]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[39] + " to:" + everySpace[29] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30] + " now at location " + everySpace[29] + "\n");
+		
+		game.move(PieceType.MARSHAL, everySpace[38], everySpace[48]);
+		expectedOutput.append(PieceType.MARSHAL.getPrintableName() + " moving from:" + everySpace[38] + " to:" + everySpace[48] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[38] + " now at location " + everySpace[48] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[29], everySpace[19]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[29] + " to:" + everySpace[19] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30] + " now at location " + everySpace[19] + "\n");
+		
+		game.move(PieceType.MARSHAL, everySpace[48], everySpace[58]);
+		expectedOutput.append(PieceType.MARSHAL.getPrintableName() + " moving from:" + everySpace[48] + " to:" + everySpace[58] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[38] + " now at location " + everySpace[58] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[19], everySpace[9]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[19] + " to:" + everySpace[9] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30] + " now at location " + everySpace[9] + "\n");
+		
+		game.move(PieceType.MARSHAL, everySpace[58], everySpace[59]);
+		expectedOutput.append(PieceType.MARSHAL.getPrintableName() + " moving from:" + everySpace[58] + " to:" + everySpace[59] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[38] + " now at location " + everySpace[59] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[9], everySpace[19]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[9] + " to:" + everySpace[19] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30] + " now at location " + everySpace[19] + "\n");
+		
+		game.move(PieceType.MARSHAL, everySpace[59], everySpace[69]);
+		expectedOutput.append(PieceType.MARSHAL.getPrintableName() + " moving from:" + everySpace[59] + " to:" + everySpace[69] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[38] + " now at location " + everySpace[69] + "\n");
+		
+		game.move(PieceType.MINER, everySpace[19], everySpace[29]);
+		expectedOutput.append(PieceType.MINER.getPrintableName() + " moving from:" + everySpace[19] + " to:" + everySpace[29] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + bluePieces[30] + " now at location " + everySpace[29] + "\n");
+		
+		// second flag captured
+		game.move(PieceType.MARSHAL, everySpace[69], everySpace[79]);
+		expectedOutput.append(PieceType.MARSHAL.getPrintableName() + " moving from:" + everySpace[69] + " to:" + everySpace[79] + "\n");
+		expectedOutput.append("\tGame Over. Result: " + MoveResultStatus.RED_WINS + "\n");		
+
+		assertEquals(expectedOutput.getBuffer().toString(), stringWriter.getBuffer().toString());		
+	}
+	
+	@Test
+	public void ObserverBattleDrawTest() throws StrategyException {
+		StringWriter stringWriter = new StringWriter();
+		Writer printWriter = new PrintWriter(stringWriter);
+		StrategyGameObserver gameObs = new StrategyGameReporter(printWriter);
+		
+		StringWriter expectedOutput = new StringWriter();
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+
+		game.startGame();
+		
+		// start game and then register the observer to avoid that massive output to console when 
+		// calling start game. Start game is already tested above.
+		((EpsilonStrategyGameController) game).register(gameObs);
+		
+		// extra new line to act as separator in console output
+		System.out.println("");
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		expectedOutput.append(PieceType.LIEUTENANT.getPrintableName() + " moving from:" + everySpace[34] + " to:" + everySpace[44] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[34] + " now at location " + everySpace[44] + "\n");
+		
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[44]);
+		expectedOutput.append(PieceType.FIRST_LIEUTENANT.getPrintableName() + " moving from:" + everySpace[64] + " to:" + everySpace[44] + "\n");
+		expectedOutput.append("\tBattle Draw. Both pieces removed.\n");
+		
+		assertEquals(expectedOutput.getBuffer().toString(), stringWriter.getBuffer().toString());		
+	}
+	
+	@Test
+	public void ObserverResignTest() throws StrategyException {
+		StringWriter stringWriter = new StringWriter();
+		Writer printWriter = new PrintWriter(stringWriter);
+		StrategyGameObserver gameObs = new StrategyGameReporter(printWriter);
+		
+		StringWriter expectedOutput = new StringWriter();
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+
+		game.startGame();
+		
+		// start game and then register the observer to avoid that massive output to console when 
+		// calling start game. Start game is already tested above.
+		((EpsilonStrategyGameController) game).register(gameObs);
+		
+		// extra new line to act as separator in console output
+		System.out.println("");
+		game.move(PieceType.LIEUTENANT, everySpace[34], everySpace[44]);
+		expectedOutput.append(PieceType.LIEUTENANT.getPrintableName() + " moving from:" + everySpace[34] + " to:" + everySpace[44] + "\n");
+		expectedOutput.append("\tMove/Battle successful. Result: " + MoveResultStatus.OK + " with piece " + redPieces[34] + " now at location " + everySpace[44] + "\n");
+		
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[64], everySpace[44]);
+		expectedOutput.append(PieceType.FIRST_LIEUTENANT.getPrintableName() + " moving from:" + everySpace[64] + " to:" + everySpace[44] + "\n");
+		expectedOutput.append("\tBattle Draw. Both pieces removed.\n");
+		
+		// red resigns
+		game.move(null, null, null);
+		expectedOutput.append("Player resigned. Result: " + MoveResultStatus.BLUE_WINS + "\n");
+		
+		assertEquals(expectedOutput.getBuffer().toString(), stringWriter.getBuffer().toString());		
+	}
+	
+	@Test(expected=StrategyException.class)
+	public void ObserverMoveExceptionTest() throws StrategyException {
+		StringWriter stringWriter = new StringWriter();
+		Writer printWriter = new PrintWriter(stringWriter);
+		StrategyGameObserver gameObs = new StrategyGameReporter(printWriter);
+		
+		StringWriter expectedOutput = new StringWriter();
+		
+		game = gameFactory.makeEpsilonStrategyGame(redCollection, blueCollection, null);
+
+		game.startGame();
+		
+		// start game and then register the observer to avoid that massive output to console when 
+		// calling start game. Start game is already tested above.
+		((EpsilonStrategyGameController) game).register(gameObs);
+		
+		// extra new line to act as separator in console output
+		System.out.println("");
+		game.move(PieceType.FIRST_LIEUTENANT, everySpace[35], everySpace[55]);		
+		expectedOutput.append("Exception thrown with message: 1ST LT cannot move 2 spaces if not attacking \n");
+		
+		assertEquals(expectedOutput.getBuffer().toString(), stringWriter.getBuffer().toString());		
+	}
 }

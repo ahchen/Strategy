@@ -3,6 +3,7 @@
  */
 package strategy.game.version.epsilon;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,6 +21,8 @@ import strategy.game.common.MoveResultStatus;
 import strategy.game.common.Piece;
 import strategy.game.common.PieceLocationDescriptor;
 import strategy.game.common.PieceType;
+import strategy.game.common.StrategyGameObservable;
+import strategy.game.common.StrategyGameObserver;
 import strategy.game.version.StrategyGameControllerImpl;
 
 /**
@@ -27,16 +30,45 @@ import strategy.game.version.StrategyGameControllerImpl;
  * @version October 15, 2013
  */
 public class EpsilonStrategyGameController extends StrategyGameControllerImpl
-		implements StrategyGameController {
+		implements StrategyGameController, StrategyGameObservable {
 	
+	private Collection<StrategyGameObserver> observerList;
 	private boolean redFlagCaptured, blueFlagCaptured;
 	private boolean firstLT2SpaceAttack;
 
+	/**
+	 * Constructor for EpsilonStrategyGameController
+	 * @param redPieces the initial starting configuration for the RED pieces
+	 * @param bluePieces the initial starting configuration for the BLUE pieces
+	 * @param observers the collection of observers to add to this game (null if no observers are needed)
+	 * @throws StrategyException if either configuration is incorrect
+	 */
 	public EpsilonStrategyGameController(
 			Collection<PieceLocationDescriptor> redPieces,
-			Collection<PieceLocationDescriptor> bluePieces)
+			Collection<PieceLocationDescriptor> bluePieces,
+			Collection<StrategyGameObserver>observers)
 			throws StrategyException {
 		super(redPieces, bluePieces);
+		
+		if (observers == null) {
+			observerList = new ArrayList<StrategyGameObserver>();
+		}
+		else {
+			observerList = observers;
+		}
+	}
+	
+	/*
+	 * @see strategy.game.StrategyGameController#startGame()
+	 */
+	@Override
+	public void startGame() throws StrategyException {
+		super.startGame();
+		
+		for (StrategyGameObserver obs : observerList) {
+			obs.gameStart(redSetup, blueSetup);
+		}
+		
 	}
 
 	/* 
@@ -57,7 +89,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		blueRepetitionFlag = false;
 		numRedMovablePieces = 33;
 		numBlueMovablePieces = 33;
-		
+
 		redFlagCaptured = false;
 		blueFlagCaptured = false;
 		firstLT2SpaceAttack= false;
@@ -208,19 +240,40 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 	public MoveResult move(PieceType piece, Location from, Location to)
 			throws StrategyException {
 		
+		MoveResult result;
+		StrategyException fault = null;
+		
 		if (piece == null && from == null && to == null) {
 			// blue was last to move so red resigned
 			if (lastPlayerColor == PlayerColor.BLUE || lastPlayerColor == null) {
-				return new MoveResult(MoveResultStatus.BLUE_WINS, null);
+
+				result = new MoveResult(MoveResultStatus.BLUE_WINS, null);
 			}
 			else {
-				// otherwise red wins
-				return new MoveResult(MoveResultStatus.RED_WINS, null);
+				// otherwise red wins	
+				result = new MoveResult(MoveResultStatus.RED_WINS, null);
 			}
 		}
 		else {
-			return super.move(piece, from, to);
+			try {
+				result = super.move(piece, from, to);
+			}
+			catch (StrategyException e) {
+				result = null;
+				fault = e;
+			}
 		}
+		
+		for (StrategyGameObserver obs : observerList) {
+			obs.moveHappened(piece, from, to, result, fault);
+		}
+		
+		// if result is null, throw the exception that was caught
+		if (result == null) {
+			throw fault;
+		}
+		
+		return result;
 	}
 	
 	@Override
@@ -238,7 +291,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 			
 			blueFlagCaptured = true;
 			
-			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, toLoc));			
+			return new MoveResult(MoveResultStatus.OK, new PieceLocationDescriptor(fromPiece, toLoc));
 		}
 		// blue attacking first red flag
 		else if (toPiece.getType() == PieceType.FLAG && lastPlayerColor == PlayerColor.RED && !redFlagCaptured) {
@@ -292,7 +345,7 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 			numBlueMovablePieces--;
 
 			return new MoveResult(MoveResultStatus.OK, null);
-		}		
+		}
 		// if set true, from piece is 1st LT and is attacking using 2 space rule.
 		else if (firstLT2SpaceAttack) {
 			// set the flag back to false
@@ -411,10 +464,10 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 	}
 	
 	/**
-	 * TODO
-	 * @param from
-	 * @param to
-	 * @throws StrategyException
+	 * Checks the validity of a move if the piece moving is a First Lieutenant 
+	 * @param from the location the First Lieutenant is moving form
+	 * @param to the location the First Lieutenant is moving to
+	 * @throws StrategyException thrown if the move for the First Lieutenant is deemed to be invalid
 	 */
 	private void checkFirstLieutenantLocation(Location from, Location to) throws StrategyException {
 		try {
@@ -443,6 +496,22 @@ public class EpsilonStrategyGameController extends StrategyGameControllerImpl
 		catch (StrategyRuntimeException e) {
 			throw new StrategyException(e.getMessage());
 		}
+	}
+
+	/* 
+	 * @see strategy.game.common.StrategyGameObservable#register(strategy.game.common.StrategyGameObserver)
+	 */
+	@Override
+	public void register(StrategyGameObserver observer) {
+		observerList.add(observer);
+	}
+
+	/* 
+	 * @see strategy.game.common.StrategyGameObservable#unregister(strategy.game.common.StrategyGameObserver)
+	 */
+	@Override
+	public void unregister(StrategyGameObserver observer) {
+		observerList.remove(observer);
 	}
 
 }

@@ -14,7 +14,6 @@ import java.util.Collection;
 
 import strategy.common.*;
 import strategy.game.common.*;
-import strategy.game.reporter.StrategyGameObserver;
 import strategy.game.version.alpha.AlphaStrategyGameController;
 import strategy.game.version.beta.BetaStrategyGameControlller;
 import strategy.game.version.delta.DeltaStrategyGameController;
@@ -63,7 +62,7 @@ public class StrategyGameFactory
 	}
 	
 	/**
-	 * Create a new Beta Strategy game given the 
+	 * Create a new Beta Strategy game given the following parameters
 	 * @param redConfiguration the initial starting configuration for the RED pieces
 	 * @param blueConfiguration the initial starting configuration for the BLUE pieces
 	 * @return the Beta Strategy game instance with the initial configuration of pieces
@@ -78,7 +77,7 @@ public class StrategyGameFactory
 	}
 	
 	/**
-	 * Create a new Gamma Strategy game given the 
+	 * Create a new Gamma Strategy game given the following parameters
 	 * @param redConfiguration the initial starting configuration for the RED pieces
 	 * @param blueConfiguration the initial starting configuration for the BLUE pieces
 	 * @return the Gamma Strategy game instance with the initial configuration of pieces
@@ -93,7 +92,7 @@ public class StrategyGameFactory
 	}
 	
 	/**
-	 * Create a new Delta Strategy game given the 
+	 * Create a new Delta Strategy game given the following parameters
 	 * @param redConfiguration the initial starting configuration for the RED pieces
 	 * @param blueConfiguration the initial starting configuration for the BLUE pieces
 	 * @return the Delta Strategy game instance with the initial configuration of pieces
@@ -108,17 +107,18 @@ public class StrategyGameFactory
 	}
 	
 	/**
-	 * 
-	 * @param redConfiguration
-	 * @param blueConfiguration
-	 * @return
-	 * @throws StrategyException 
+	 * Create a new Epsilon Strategy game given the following parameters
+	 * @param redConfiguration the initial starting configuration for the RED pieces
+	 * @param blueConfiguration the initial starting configuration for the BLUE pieces
+	 * @param observers the collection of observers to add to this game (null if no observers are needed)
+	 * @return the Delta Strategy game instance with the initial configuration of pieces
+	 * @throws StrategyException if either configuration is incorrect
 	 */
 	public StrategyGameController makeEpsilonStrategyGame( 
 			Collection<PieceLocationDescriptor> redConfiguration, 
 			Collection<PieceLocationDescriptor> blueConfiguration, 
 			Collection<StrategyGameObserver>observers) throws StrategyException {
-		return new EpsilonStrategyGameController(redConfiguration, blueConfiguration);
+		return new EpsilonStrategyGameController(redConfiguration, blueConfiguration, observers);
 	} 
 	
 
